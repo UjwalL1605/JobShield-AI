@@ -135,7 +135,7 @@ def _run_analysis(text: str, source_type: str) -> dict:
     rule_score = rule_result["rule_score"]
 
     # Weight: 40% ML, 50% rules, 10% known scam boost
-    combined_score = (ml_score * 0.4) + (rule_score * 0.5)
+    combined_score = (ml_score * 0.65) + (rule_score * 0.35)
 
     # Boost if known scam identifiers found
     if known_warnings:

@@ -58,14 +58,28 @@ TEST_SET = [
 ]
 
 
-def evaluate():
+def evaluate(verbose: bool = True) -> float:
+    """
+    Run the real-world holdout evaluation.
+
+    Args:
+        verbose: if True (default), prints the full report as before.
+                 if False, runs silently and just returns the accuracy —
+                 useful when another script (e.g. evaluate_combined.py)
+                 wants the number without duplicating console output.
+
+    Returns:
+        accuracy as a float in [0, 1]. Returns 0.0 if the model files
+        aren't found (and prints an error regardless of verbose, since
+        that's a real problem the caller needs to see).
+    """
     model_dir = os.path.join(os.path.dirname(__file__), "models")
     tfidf_path = os.path.join(model_dir, "tfidf_vectorizer.pkl")
     model_path = os.path.join(model_dir, "scam_classifier.pkl")
 
     if not os.path.exists(tfidf_path) or not os.path.exists(model_path):
         print("❌ Trained model not found. Run train_model.py first.")
-        return
+        return 0.0
 
     tfidf = joblib.load(tfidf_path)
     model = joblib.load(model_path)
@@ -82,31 +96,34 @@ def evaluate():
     recall = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
 
-    print("=" * 55)
-    print("📈 REAL-WORLD HOLDOUT EVALUATION (hand-written, unseen)")
-    print("=" * 55)
-    print(f"  Samples:   {len(TEST_SET)}")
-    print(f"  Accuracy:  {accuracy:.4f}")
-    print(f"  Precision: {precision:.4f}")
-    print(f"  Recall:    {recall:.4f}")
-    print(f"  F1 Score:  {f1:.4f}")
+    if verbose:
+        print("=" * 55)
+        print("📈 REAL-WORLD HOLDOUT EVALUATION (hand-written, unseen)")
+        print("=" * 55)
+        print(f"  Samples:   {len(TEST_SET)}")
+        print(f"  Accuracy:  {accuracy:.4f}")
+        print(f"  Precision: {precision:.4f}")
+        print(f"  Recall:    {recall:.4f}")
+        print(f"  F1 Score:  {f1:.4f}")
 
-    print("\n📋 Classification Report:")
-    print(classification_report(y_true, y_pred, target_names=["Legitimate", "Scam"]))
+        print("\n📋 Classification Report:")
+        print(classification_report(y_true, y_pred, target_names=["Legitimate", "Scam"]))
 
-    print("🔢 Confusion Matrix:")
-    cm = confusion_matrix(y_true, y_pred)
-    print(f"  TN={cm[0][0]}  FP={cm[0][1]}")
-    print(f"  FN={cm[1][0]}  TP={cm[1][1]}")
+        print("🔢 Confusion Matrix:")
+        cm = confusion_matrix(y_true, y_pred)
+        print(f"  TN={cm[0][0]}  FP={cm[0][1]}")
+        print(f"  FN={cm[1][0]}  TP={cm[1][1]}")
 
-    print("\n❌ Misclassified examples:")
-    label_name = {0: "Legit", 1: "Scam"}
-    for i, (text, true_label) in enumerate(TEST_SET):
-        if y_pred[i] != true_label:
-            print(f"  True={label_name[true_label]:6s} Pred={label_name[y_pred[i]]:6s} "
-                  f"(prob_scam={y_prob[i]:.2f}) | {text[:110]}")
+        print("\n❌ Misclassified examples:")
+        label_name = {0: "Legit", 1: "Scam"}
+        for i, (text, true_label) in enumerate(TEST_SET):
+            if y_pred[i] != true_label:
+                print(f"  True={label_name[true_label]:6s} Pred={label_name[y_pred[i]]:6s} "
+                      f"(prob_scam={y_prob[i]:.2f}) | {text[:110]}")
 
-    print("\n✅ Evaluation complete!")
+        print("\n✅ Evaluation complete!")
+
+    return accuracy
 
 
 if __name__ == "__main__":

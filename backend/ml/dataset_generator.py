@@ -52,6 +52,17 @@ SCAM_TEMPLATES = [
     "Dear Candidate, We are delighted to extend an offer for the {role} position at {company}. Kindly revert with your bank account details for payroll setup within 24 hours to avoid delay in onboarding.",
     "Hi, HR at {company} here. Great news, you're through to the final stage! Just need your date of birth, address and bank IFSC code to prepare your employment contract.",
     "{company} Talent Team: Your resume matched our open role perfectly, no interview needed. Reply with your Aadhaar number so we can generate your employee ID before joining.",
+    # ── Casual/conversational scam phrasing — no scaffolding artifacts ──
+    "hey are you still looking for work? my cousin got placed at {company} last month, they're hiring again. just message {phone} and they'll walk you through registration, small deposit needed but you get it back",
+    "{name} here, freelance recruiter for {company}. got a lead for you - fully remote, {salary} a month easy. only catch is a laptop verification charge of ₹{fee}. lmk if interested",
+    "hii sir/madam we from {company} plzz send ur bank details n aadhar for job process, salary {salary} confirm, no tension",
+    "URGENT JOB ALERT 🔔 {company} recruiting for multiple roles pan india. WFH available. freshers welcome. registration link in bio, small fee applies. hurry limited period",
+    "Hey! Saw you're job hunting. {company} has an opening, HR is my friend. She said just fill this form and pay the verification amount ₹{fee}, she'll fast-track your application",
+    "*Forwarded* {company} is conducting a hiring drive this week. Genuine WFH opportunity. Interested candidates DM {handle} on Instagram. Small registration amount required to lock your slot",
+    "This is {name}, placement coordinator. Your resume has been shortlisted for {company}. Kindly complete the joining formalities by sharing your account number for the advance stipend transfer of ₹{salary}",
+    "So excited to tell you - {company} said yes! They just need me to pay ₹{fee} for the 'training kit' before I start Monday. Has anyone else done this before, is this normal??",
+    "Bro {company} is hiring, my friend joined last week, easy money {salary}/month, just DM {handle} they'll explain everything, no interview needed only basic details",
+    "Received this today: '{company} welcomes you aboard! Complete your KYC via the link and deposit ₹{fee} refundable caution money to activate your ID card.'",
 ]
 
 # ─── Legitimate Job Templates ──────────────────────────────────────────────────
@@ -86,6 +97,17 @@ LEGIT_TEMPLATES = [
     "As part of our onboarding process, {company} requires a refundable security deposit of ₹{cert_fee} for company laptop issuance, returned upon completion of probation. Full details in your official offer letter.",
     "Reminder: your {company} interview is scheduled for {date} at {time}. Please carry your original documents. This is a formal in-person process, no online payment is required at any stage.",
     "{company} is closing applications for the {role} internship in 2 days. Don't miss out, apply now at {website}. Selection purely on merit, no payment involved.",
+    # ── Casual/conversational legit phrasing — no scaffolding artifacts ──
+    "hey, we're looking for a {role} on my team at {company}, mostly {skill} work. pay's decent and the team's great. shoot me your resume if you're interested, no rush",
+    "Placement Cell Notice: {company} will conduct a pre-placement talk this {date} followed by an online assessment. Eligibility {ctc}+ CGPA equivalent, no active backlogs.",
+    "I'm looking for 2 interns for a {months}-month research assistantship in my lab at {college}. Unpaid, but you'll get a co-authorship credit and a letter of recommendation. Email your CV if interested.",
+    "Our {role} team is short-staffed and we need someone who can start soon. Contract-to-hire, ₹{stipend}/month, fully remote, daily standup. Reply here if you'd like a call.",
+    "Congrats on making it to the final interview round for the {role} position at {company}! Just a heads up, this round is with our VP directly, so dress professionally.",
+    "Hi, thanks for applying to {company}. Wanted to give you a quick update - we're still reviewing applications, should hear back within two weeks either way.",
+    "{company} referral program: if you know someone great for the {role} role, send them my way. No fees involved, just good karma and maybe a coffee on me.",
+    "Quick note from HR at {company} - your background verification came back clean, offer letter incoming this week. Excited to have you on the {role} team.",
+    "We're a {industry} startup building {product}, looking for a {role} to join us early. Equity + salary, {years}+ years experience preferred. Email {corporate_email} if curious.",
+    "{college} Career Services: {company} has posted a new {role} opening on the placement portal. Deadline to apply is {date}. Check your student login for details.",
 ]
 
 # ─── Fill Values ─────────────────────────────────────────────────────────────────

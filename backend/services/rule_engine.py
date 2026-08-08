@@ -23,7 +23,9 @@ SCAM_KEYWORDS = {
             "deposit ₹", "deposit rs", "membership fee",
             "joining fee", "onboarding fee", "background verification fee",
             "pay to confirm", "pay to register", "pay to start",
-            "fee of ₹", "fee of rs", "charge of ₹",
+            "fee of ₹", "fee of rs", "charge of ₹","training fee", "admission fee", "application fee",
+            "training material fee", "course material fee", "material fee",
+            "certificate fee", "certification fee", "platform fee",
         ],
     },
     "urgency_language": {
@@ -75,9 +77,9 @@ SCAM_KEYWORDS = {
         "severity": "medium",
         "description": "Unrealistic job claims detected",
         "keywords": [
-            "work from home", "work from anywhere",
+            "work from home", "work from anywhere", "wfh",
             "earn from home", "simple typing work",
-            "data entry operators", "copy paste work",
+            "data entry operators", "data entry", "copy paste work",
             "free laptop", "passive income",
             "unlimited income", "earn daily",
             "flexible hours", "part time earn",
@@ -113,6 +115,27 @@ SCAM_KEYWORDS = {
             "invest and earn", "invest ₹", "invest rs",
             "returns guaranteed", "daily returns",
             "membership fee", "joining package",
+        ],
+    },
+    "credential_harvesting": {
+        "severity": "high",
+        "description": "Request for sensitive personal/banking credentials",
+        "keywords": [
+            "bank login", "bank account number", "otp", "upi pin",
+            "aadhaar number", "aadhaar card", "pan card", "ifsc code",
+            "bank passbook", "date of birth and address", "screenshot of your bank",
+            "share your bank", "kyc is pending", "complete your kyc",
+            "verify your identity by sharing", "banking details for",
+        ],
+    },
+    "investment_scam": {
+        "severity": "high",
+        "description": "Investment or task-based earning scheme detected",
+        "keywords": [
+            "guaranteed returns", "trading assistant", "crypto trading",
+            "task group", "complete simple tasks", "task assignments",
+            "starting investment", "open your trading account",
+            "weekly returns", "unlock higher paying tasks",
         ],
     },
 }
@@ -179,7 +202,8 @@ def _is_negated(text_lower: str, match_start: int, window_chars: int = 30) -> bo
     preceding_text = text_lower[window_start:match_start]
 
     for neg in NEGATION_WORDS:
-        if neg in preceding_text:
+        pattern = r'\b' + re.escape(neg) + r'\b'
+        if re.search(pattern, preceding_text):
             return True
     return False
 
