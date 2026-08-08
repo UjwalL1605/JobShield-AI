@@ -1,9 +1,9 @@
 # Backend dependencies for JobShield AI
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
-scikit-learn==1.5.1
-pandas==2.2.2
-numpy==1.26.4
+scikit-learn>=1.5.2
+pandas>=2.2.3
+numpy>=2.0.0
 easyocr==1.7.1
 python-multipart==0.0.9
 pydantic==2.8.2

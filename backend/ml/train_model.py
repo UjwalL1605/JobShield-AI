@@ -1,8 +1,9 @@
 """
-JobShield AI — Model Training Script
+JobShield AI — Model Training Script (v2, grouped split)
 
 Trains a TF-IDF + Logistic Regression classifier for scam detection.
-Outputs accuracy, precision, recall, F1, and saves the trained model.
+Splits by template_id (not by row) so the model can't just memorize
+template shape — this gives an honest accuracy estimate.
 """
 
 import os
@@ -10,30 +11,25 @@ import sys
 import joblib
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import GroupShuffleSplit, GroupKFold, cross_val_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
     f1_score, classification_report, confusion_matrix
 )
 
-# Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 
 def preprocess_text(text):
-    """Basic text preprocessing."""
     if not isinstance(text, str):
         return ""
-    text = text.lower().strip()
-    # Keep most characters — TF-IDF handles tokenization
-    return text
+    return text.lower().strip()
 
 
 def train_model(data_path=None, model_dir=None):
-    """Train TF-IDF + Logistic Regression scam classifier."""
-
     if data_path is None:
         data_path = os.path.join(os.path.dirname(__file__), "data", "training_data.csv")
 
@@ -42,34 +38,47 @@ def train_model(data_path=None, model_dir=None):
 
     os.makedirs(model_dir, exist_ok=True)
 
-    # ── Load Data ────────────────────────────────────────────────────────────
     if not os.path.exists(data_path):
         print("⚠️  Training data not found. Generating synthetic dataset...")
         from dataset_generator import generate_dataset
         generate_dataset(output_path=data_path)
 
     df = pd.read_csv(data_path)
+
+    if "template_id" not in df.columns:
+        raise ValueError(
+            "training_data.csv has no template_id column — delete it and rerun "
+            "dataset_generator.py with the updated script to regenerate it."
+        )
+
     print(f"📊 Loaded {len(df)} samples")
     print(f"   Scam: {(df['label'] == 1).sum()}, Legit: {(df['label'] == 0).sum()}")
+    print(f"   Unique templates: {df['template_id'].nunique()}")
 
-    # ── Preprocess ───────────────────────────────────────────────────────────
     df["text_clean"] = df["text"].apply(preprocess_text)
-    df = df[df["text_clean"].str.len() > 10]  # Remove very short texts
+    df = df[df["text_clean"].str.len() > 10].reset_index(drop=True)
 
     X = df["text_clean"]
     y = df["label"]
+    groups = df["template_id"]
 
-    # ── Train/Test Split ─────────────────────────────────────────────────────
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+    # ── Group-aware Train/Test Split ─────────────────────────────────────────
+    # Same template can NEVER appear in both train and test — this is what
+    # makes the resulting score trustworthy instead of inflated.
+    gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    train_idx, test_idx = next(gss.split(X, y, groups))
+
+    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+    y_train, y_test = y.iloc[train_idx].reset_index(drop=True), y.iloc[test_idx].reset_index(drop=True)
+    groups_train = groups.iloc[train_idx]
 
     print(f"\n🔀 Split: {len(X_train)} train, {len(X_test)} test")
+    print(f"   Train templates: {groups_train.nunique()}, Test templates: {groups.iloc[test_idx].nunique()}")
 
     # ── TF-IDF Vectorization ────────────────────────────────────────────────
     tfidf = TfidfVectorizer(
         max_features=5000,
-        ngram_range=(1, 2),       # Unigrams + bigrams
+        ngram_range=(1, 2),
         min_df=2,
         max_df=0.95,
         sublinear_tf=True,
@@ -88,12 +97,10 @@ def train_model(data_path=None, model_dir=None):
         solver="lbfgs",
         random_state=42,
     )
-
     model.fit(X_train_tfidf, y_train)
 
     # ── Evaluation ───────────────────────────────────────────────────────────
     y_pred = model.predict(X_test_tfidf)
-    y_prob = model.predict_proba(X_test_tfidf)[:, 1]
 
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred)
@@ -101,7 +108,7 @@ def train_model(data_path=None, model_dir=None):
     f1 = f1_score(y_test, y_pred)
 
     print("\n" + "=" * 50)
-    print("📈 MODEL PERFORMANCE")
+    print("📈 MODEL PERFORMANCE (grouped split — honest estimate)")
     print("=" * 50)
     print(f"  Accuracy:  {accuracy:.4f}")
     print(f"  Precision: {precision:.4f}")
@@ -116,12 +123,30 @@ def train_model(data_path=None, model_dir=None):
     print(f"  TN={cm[0][0]}  FP={cm[0][1]}")
     print(f"  FN={cm[1][0]}  TP={cm[1][1]}")
 
-    # ── Cross Validation ─────────────────────────────────────────────────────
-    X_all_tfidf = tfidf.transform(X)
-    cv_scores = cross_val_score(model, X_all_tfidf, y, cv=5, scoring="f1")
-    print(f"\n🔄 5-Fold CV F1: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+    # ── Misclassified Examples ───────────────────────────────────────────────
+    X_test_reset = X_test.reset_index(drop=True)
+    wrong_mask = y_pred != y_test.values
+    print(f"\n❌ Misclassified: {wrong_mask.sum()} out of {len(y_test)}")
+    label_name = {0: "Legit", 1: "Scam"}
+    for text, true_label, pred_label in list(zip(
+        X_test_reset[wrong_mask], y_test[wrong_mask], y_pred[wrong_mask]
+    ))[:10]:
+        print(f"  True={label_name[true_label]:6s} Pred={label_name[pred_label]:6s} | {text[:100]}")
 
-    # ── Top Scam Indicators ──────────────────────────────────────────────────
+    # ── Group-aware Cross Validation ─────────────────────────────────────────
+    cv_pipeline = Pipeline([
+        ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1, 2),
+                                   min_df=2, max_df=0.95, sublinear_tf=True)),
+        ("clf", LogisticRegression(max_iter=1000, C=1.0,
+                                    class_weight="balanced", solver="lbfgs", random_state=42)),
+    ])
+    n_groups = groups.nunique()
+    cv_folds = min(5, n_groups)
+    gkf = GroupKFold(n_splits=cv_folds)
+    cv_scores = cross_val_score(cv_pipeline, X, y, groups=groups, cv=gkf, scoring="f1")
+    print(f"\n🔄 {cv_folds}-Fold Group CV F1: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+
+    # ── Top Indicators ───────────────────────────────────────────────────────
     feature_names = tfidf.get_feature_names_out()
     coefs = model.coef_[0]
     top_scam_idx = np.argsort(coefs)[-20:][::-1]
@@ -135,19 +160,27 @@ def train_model(data_path=None, model_dir=None):
     for idx in top_legit_idx:
         print(f"  {feature_names[idx]:30s} {coefs[idx]:.4f}")
 
-    # ── Save Model ───────────────────────────────────────────────────────────
+    # ── Save Model (retrained on ALL data for the actual deployed app) ───────
+    final_tfidf = TfidfVectorizer(
+        max_features=5000, ngram_range=(1, 2), min_df=2, max_df=0.95, sublinear_tf=True
+    )
+    X_all_tfidf = final_tfidf.fit_transform(X)
+    final_model = LogisticRegression(
+        max_iter=1000, C=1.0, class_weight="balanced", solver="lbfgs", random_state=42
+    )
+    final_model.fit(X_all_tfidf, y)
+
     tfidf_path = os.path.join(model_dir, "tfidf_vectorizer.pkl")
     model_path = os.path.join(model_dir, "scam_classifier.pkl")
+    joblib.dump(final_tfidf, tfidf_path)
+    joblib.dump(final_model, model_path)
 
-    joblib.dump(tfidf, tfidf_path)
-    joblib.dump(model, model_path)
-
-    print(f"\n💾 Model saved:")
+    print(f"\n💾 Final model (trained on all data) saved:")
     print(f"   Vectorizer: {tfidf_path}")
     print(f"   Classifier: {model_path}")
     print("\n✅ Training complete!")
 
-    return tfidf, model
+    return final_tfidf, final_model
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 """
-JobShield AI — Synthetic Dataset Generator
+JobShield AI — Synthetic Dataset Generator (v2)
 
-Generates a labeled dataset of ~2000 samples for training the scam detection model.
-Each sample is a job/internship message labeled as 0 (legitimate) or 1 (scam).
+Generates a labeled dataset for training the scam detection model.
+Each sample is tagged with a template_id so train/test can be split
+by template (prevents the model from just memorizing template shape).
 """
 
 import pandas as pd
@@ -12,7 +13,6 @@ import os
 # ─── Scam Templates ─────────────────────────────────────────────────────────────
 
 SCAM_TEMPLATES = [
-    # Fee-based scams
     "Congratulations! You have been selected for {company} internship. Pay ₹{fee} registration fee to confirm your seat. Limited seats available. Contact {email} immediately.",
     "Dear Candidate, {company} is offering guaranteed placement with ₹{salary}/month salary. To proceed, pay ₹{fee} as security deposit. Offer expires today!",
     "URGENT: You are shortlisted for {company} work from home job. Salary ₹{salary}/month. Pay ₹{fee} processing fee to get your offer letter. WhatsApp: {phone}",
@@ -23,90 +23,69 @@ SCAM_TEMPLATES = [
     "Selected for {company} placement drive! Pay ₹{fee} exam fee. 100% placement guarantee. Offer valid till today only. Hurry! Email: {email}",
     "Job Opening at {company}. No interview required. Just pay ₹{fee} and start earning ₹{salary}/month from day 1. Work from home. Contact: {phone}",
     "ATTENTION: {company} is hiring! Part-time job, earn ₹{salary}/day! Simple typing work. Registration fee ₹{fee}. DM now for details.",
-
-    # Urgency + vague role scams
     "LAST CHANCE! {company} hiring freshers NOW. ₹{salary}/month. No skills required. Apply immediately before all positions are filled. Contact: {email}",
     "⚠️ FINAL CALL: Only 5 seats left for {company} internship program. Register now by paying ₹{fee}. Don't miss this golden opportunity!",
     "Dear candidate, you've been referred for an exclusive position at {company}. Salary: ₹{salary}/month. This offer expires in 2 hours. Reply YES to confirm.",
     "Hi! {company} is looking for data entry operators. Work from home. Earn ₹{salary}/day. No experience needed. Pay ₹{fee} to start. WhatsApp: {phone}",
     "You won a lottery selection for {company} internship! Pay ₹{fee} to claim your position. Certificate + stipend provided. Act fast!",
-
-    # Fake offer letter scams
     "Dear {name}, Please find attached your offer letter from {company}. To activate your employment, transfer ₹{fee} to the following UPI: {upi}. HR Team",
     "Your application to {company} has been approved! Download your appointment letter after paying ₹{fee} verification fee. Contact HR: {email}",
     "Welcome to {company}! Your joining date is next Monday. Please complete onboarding by paying ₹{fee} for background verification. UPI: {upi}",
-
-    # Social media scams
     "🌟 {company} is hiring! DM us on Instagram @{handle} for details. Earn ₹{salary}/month. Quick hiring process. No resume needed!",
     "Telegram job alert! {company} needs 500 workers for data entry. ₹{salary}/day guaranteed. Join our channel and pay ₹{fee} to register.",
-
-    # Impersonation scams
     "This is from {company} HR department. We found your resume on Naukri. You are shortlisted. Pay ₹{fee} for aptitude test. Call: {phone}",
     "Google/Microsoft/Amazon is hiring freshers! Salary ₹{salary}/month. Send your resume to {email} and pay ₹{fee} application fee.",
     "TCS/Infosys/Wipro walk-in drive! No experience needed. ₹{salary}/month CTC. Registration fee ₹{fee}. Venue details after payment.",
-
-    # Multi-level / referral scams
     "Earn ₹{salary}/month by referring friends to {company}! Pay ₹{fee} membership fee. Each referral earns you ₹500. Unlimited income potential!",
     "Join {company} affiliate program. Invest ₹{fee} and earn ₹{salary}/month passive income. 100% guaranteed returns. WhatsApp: {phone}",
-
-    # SMS-style scams
     "Congrats! U r selected 4 {company} job. Sal: {salary}/m. Pay {fee} 2 confirm. Call {phone} NOW!",
     "Selected! {company}. ₹{salary}/m. Pay ₹{fee}. Limited offer. {phone}",
     "FREE LAPTOP + ₹{salary}/month job at {company}. Just pay ₹{fee} shipping. WhatsApp {phone}",
-
-    # Vague description scams
     "Are you looking for a job? {company} is hiring. Good salary. Flexible hours. Work from anywhere. Pay ₹{fee} to apply. Contact: {email}",
     "Part time / Full time job available at {company}. Earn ₹{salary}/month minimum. Investment: ₹{fee} only. Returns guaranteed. {phone}",
+    # ── Hard cases: no fee mentioned, data-harvesting or professional-sounding scams ──
+    "Hello, this is {name} from {company} recruitment team. We reviewed your profile and would like to proceed with onboarding. Kindly share your bank account number and Aadhaar details to process your first month's salary in advance.",
+    "{company} is pleased to offer you the position of Business Development Executive. To complete verification, please send a scanned copy of your ID proof and PAN card to {email}.",
+    "Thank you for your interest in {company}. Your final round is a formality. Please share your banking details for salary account setup before we release your appointment letter.",
+    "We are excited to have you join {company} as a remote data associate. Please confirm by sharing your UPI PIN for verification purposes. Regards, HR",
+    "{company} recruitment update: your interview has been waived based on a strong profile match. Kindly complete KYC by sharing your Aadhaar and bank passbook photo to {email}.",
+    "Dear Candidate, We are delighted to extend an offer for the {role} position at {company}. Kindly revert with your bank account details for payroll setup within 24 hours to avoid delay in onboarding.",
+    "Hi, HR at {company} here. Great news, you're through to the final stage! Just need your date of birth, address and bank IFSC code to prepare your employment contract.",
+    "{company} Talent Team: Your resume matched our open role perfectly, no interview needed. Reply with your Aadhaar number so we can generate your employee ID before joining.",
 ]
 
 # ─── Legitimate Job Templates ──────────────────────────────────────────────────
 
 LEGIT_TEMPLATES = [
-    # Standard job postings
     "We are looking for a {role} to join our team at {company}. Requirements: {years}+ years of experience in {skill}. Competitive salary and benefits. Apply at {website}.",
     "{company} is hiring a {role}. Location: {city}. Experience: {years}+ years. Skills required: {skill}, {skill2}. Send your resume to {corporate_email}.",
     "Job Opening: {role} at {company}, {city}. We offer a collaborative work environment, health insurance, and competitive compensation. Apply through our careers page: {website}.",
     "Position: {role}\nCompany: {company}\nLocation: {city}\nExperience: {years}-{years2} years\nSkills: {skill}, {skill2}, {skill3}\nApply: {website}\n\nEqual opportunity employer.",
     "{company} invites applications for {role}. CTC: {ctc} LPA. Location: {city}. Qualifications: B.Tech/M.Tech in {field}. Apply by {date}.",
-
-    # Internship postings
     "{company} Summer Internship Program {year}. Duration: {months} months. Stipend: ₹{stipend}/month. Eligibility: Students in {field}. Apply at {website} by {date}.",
     "Internship Opportunity at {company}. Role: {role} Intern. Duration: {months} months. Location: {city} (Hybrid). Stipend: ₹{stipend}/month. No registration fee.",
     "We're offering a {months}-month internship for {field} students at {company}, {city}. You'll work on real projects with our {role} team. Stipend provided. Apply: {website}",
-
-    # Campus placement
     "{company} will be visiting {college} for campus placements on {date}. Eligible branches: CSE, IT, ECE. CTC: {ctc} LPA. No registration charges. Prepare well!",
     "Campus Drive Alert: {company} | Date: {date} | Package: {ctc} LPA | Eligibility: 60% throughout, no backlogs | Register on the placement portal by {date}.",
-
-    # Professional tone
     "Dear Applicant, Thank you for applying to the {role} position at {company}. We have reviewed your application and would like to invite you for a technical interview on {date} at {time}. Please confirm your availability. Regards, HR Team, {company}",
     "We are pleased to inform you that you have been shortlisted for the {role} position at {company}. The next round is a coding test scheduled on {date}. No fees required at any stage of recruitment.",
     "Thank you for your interest in {company}. We are currently reviewing applications for the {role} position. Our recruitment process includes: 1) Resume screening, 2) Technical interview, 3) HR discussion. We do not charge any fees.",
-
-    # LinkedIn style
     "Exciting opportunity! {company} is expanding and we're looking for talented {role}s. If you have {years}+ years of experience in {skill} and {skill2}, apply through the link in bio. #hiring #{skill}",
     "🚀 We're hiring! {company} needs a {role} in {city}. Great culture, competitive pay, learning opportunities. Check out the JD on our careers page. #openposition",
-
-    # Detailed JD
     "About {company}: We are a leading {industry} company based in {city}.\n\nRole: {role}\nResponsibilities:\n- Design and develop {skill} solutions\n- Collaborate with cross-functional teams\n- Write clean, maintainable code\n\nRequirements:\n- {years}+ years in {skill}\n- Strong problem-solving skills\n- Excellent communication\n\nBenefits: Health insurance, flexible hours, learning budget\n\nApply: {website}",
-
-    # Government / formal
     "{company} Recruitment {year}. Post: {role}. Vacancies: {vacancies}. Qualification: {qualification}. Age limit: 18-{age} years. Apply online at {website}. Last date: {date}. No application fee for SC/ST candidates.",
-
-    # Remote job
     "Remote {role} position at {company}. We're a distributed team working across {city} and {city2}. Stack: {skill}, {skill2}, {skill3}. Salary: {ctc} LPA. Apply: {corporate_email}",
-
-    # Startup
     "Join our early-stage startup {company}! We're building {product} and need a {role}. Equity + competitive salary. If you're passionate about {field}, send your resume to {corporate_email}.",
-
-    # Referral
     "Hey, my team at {company} is hiring a {role}. Great work culture and benefits. If interested, apply through {website} and I can refer you internally. Happy to chat!",
-
-    # Standard email
     "Subject: Application for {role} - {company}\n\nDear Hiring Manager,\n\nI am writing to express my interest in the {role} position at {company}. With {years} years of experience in {skill}, I believe I would be a strong fit.\n\nBest regards",
-
-    # Rejection (also legitimate)
     "Dear Applicant, After careful consideration, we regret to inform you that we will not be moving forward with your application for the {role} position at {company}. We encourage you to apply for future openings. Regards, HR Team",
+    # ── Hard cases: urgency and legitimate refundable fees (still legit) ──
+    "{company} certification exam registration is now open. A nominal exam fee of ₹{cert_fee} applies, fully refundable upon course completion. Register at {website} before {date}.",
+    "Limited seats available for {company}'s {months}-month internship cohort! Apply within 48 hours to secure your spot. Stipend: ₹{stipend}/month. No hidden charges. Apply: {website}",
+    "Hurry! {company} campus placement registration closes {date}. Eligible students must register on the official portal. Selection is based purely on merit, no fees at any stage.",
+    "As part of our onboarding process, {company} requires a refundable security deposit of ₹{cert_fee} for company laptop issuance, returned upon completion of probation. Full details in your official offer letter.",
+    "Reminder: your {company} interview is scheduled for {date} at {time}. Please carry your original documents. This is a formal in-person process, no online payment is required at any stage.",
+    "{company} is closing applications for the {role} internship in 2 days. Don't miss out, apply now at {website}. Selection purely on merit, no payment involved.",
 ]
 
 # ─── Fill Values ─────────────────────────────────────────────────────────────────
@@ -192,11 +171,14 @@ HANDLES = [
 def _random_fee():
     return random.choice([499, 599, 799, 999, 1499, 1999, 2499, 2999, 4999, 5999, 9999])
 
+def _random_cert_fee():
+    return random.choice([300, 500, 750, 1000, 1500])
+
 def _random_scam_salary():
     return random.choice([
         "50,000", "75,000", "1,00,000", "1,20,000", "1,50,000",
         "2,00,000", "80,000", "60,000", "40,000", "25,000",
-        "3,000", "5,000", "8,000", "10,000",  # daily
+        "3,000", "5,000", "8,000", "10,000",
     ])
 
 def _random_legit_stipend():
@@ -222,7 +204,6 @@ def _random_date():
     return f"{random.randint(1, 28)} {random.choice(months)} 2025"
 
 def _fill_scam_template(template):
-    years_val = _random_years()
     return template.format(
         company=random.choice(SCAM_COMPANIES),
         fee=_random_fee(),
@@ -232,6 +213,7 @@ def _fill_scam_template(template):
         upi=random.choice(SCAM_UPIS),
         name=random.choice(["Rahul", "Priya", "Amit", "Sneha", "Ravi", "Anjali"]),
         handle=random.choice(HANDLES),
+        role=random.choice(ROLES),
     )
 
 def _fill_legit_template(template):
@@ -254,6 +236,7 @@ def _fill_legit_template(template):
         website=f"https://careers.{corp_domain}.com",
         corporate_email=f"careers@{corp_domain}.com",
         ctc=_random_ctc(),
+        cert_fee=_random_cert_fee(),
         field=random.choice(FIELDS),
         date=_random_date(),
         time=f"{random.randint(9,17)}:00 IST",
@@ -268,8 +251,8 @@ def _fill_legit_template(template):
         age=str(random.randint(28, 35)),
     )
 
-def generate_dataset(num_scam=1000, num_legit=1000, output_path=None):
-    """Generate a balanced synthetic dataset."""
+def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
+    """Generate a balanced synthetic dataset, tagged with template_id for grouped splitting."""
 
     if output_path is None:
         output_path = os.path.join(os.path.dirname(__file__), "data", "training_data.csv")
@@ -278,25 +261,24 @@ def generate_dataset(num_scam=1000, num_legit=1000, output_path=None):
 
     data = []
 
-    # Generate scam samples
     for _ in range(num_scam):
-        template = random.choice(SCAM_TEMPLATES)
-        text = _fill_scam_template(template)
-        data.append({"text": text, "label": 1})
+        idx = random.randrange(len(SCAM_TEMPLATES))
+        text = _fill_scam_template(SCAM_TEMPLATES[idx])
+        data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
 
-    # Generate legit samples
     for _ in range(num_legit):
-        template = random.choice(LEGIT_TEMPLATES)
+        idx = random.randrange(len(LEGIT_TEMPLATES))
         try:
-            text = _fill_legit_template(template)
+            text = _fill_legit_template(LEGIT_TEMPLATES[idx])
         except (KeyError, IndexError):
             continue
-        data.append({"text": text, "label": 0})
+        data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
 
     random.shuffle(data)
     df = pd.DataFrame(data)
     df.to_csv(output_path, index=False)
     print(f"✅ Generated {len(df)} samples ({num_scam} scam, {len(df) - num_scam} legit)")
+    print(f"   {len(SCAM_TEMPLATES)} scam templates, {len(LEGIT_TEMPLATES)} legit templates")
     print(f"   Saved to: {output_path}")
     return df
 
