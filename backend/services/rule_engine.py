@@ -153,6 +153,35 @@ FREE_EMAIL_PROVIDERS = {
     "icloud.com", "gmx.com", "fastmail.com",
 }
 
+# ─── Negation Handling ──────────────────────────────────────────────────────────
+
+NEGATION_WORDS = {
+    "no", "not", "without", "never", "none", "n't",
+    "does not", "doesn't", "do not", "don't",
+    "did not", "didn't", "won't", "will not",
+    "free of", "waived", "exempt from",
+}
+
+# Categories where a preceding negation flips the meaning (fee/payment/guarantee
+# claims). Urgency and emotional-manipulation language isn't meaningfully
+# negatable the same way, so we leave those categories alone.
+NEGATABLE_CATEGORIES = {"fee_request", "guaranteed_outcomes", "payment_methods", "referral_scheme"}
+
+
+def _is_negated(text_lower: str, match_start: int, window_chars: int = 30) -> bool:
+    """
+    Check if a matched keyword is preceded by a negation word within a
+    short window (e.g. 'no registration fee', 'does not require payment').
+    Looks backward from the match position, not forward, since negation
+    almost always precedes the thing being negated in English.
+    """
+    window_start = max(0, match_start - window_chars)
+    preceding_text = text_lower[window_start:match_start]
+
+    for neg in NEGATION_WORDS:
+        if neg in preceding_text:
+            return True
+    return False
 
 def analyze_text(text: str) -> Dict:
     """
@@ -167,21 +196,29 @@ def analyze_text(text: str) -> Dict:
     found_keywords = []
     legit_count = 0
 
-    # ── Check scam keyword categories ────────────────────────────────────────
+   # ── Check scam keyword categories (negation-aware) ──────────────────────
+    negated_matches_count = 0
+
     for category, info in SCAM_KEYWORDS.items():
         matched = []
         for keyword in info["keywords"]:
-            if keyword.lower() in text_lower:
+            if keyword.lower() not in text_lower:
+                continue
+
+            for m in re.finditer(re.escape(keyword), text_lower):
+                if category in NEGATABLE_CATEGORIES and _is_negated(text_lower, m.start()):
+                    # "no registration fee" — skip this occurrence, it's not a risk signal
+                    negated_matches_count += 1
+                    continue
+
                 matched.append(keyword)
-                # Find positions for highlighting
-                for m in re.finditer(re.escape(keyword), text_lower):
-                    found_keywords.append({
-                        "keyword": text[m.start():m.end()],
-                        "start": m.start(),
-                        "end": m.end(),
-                        "category": category,
-                        "severity": info["severity"],
-                    })
+                found_keywords.append({
+                    "keyword": text[m.start():m.end()],
+                    "start": m.start(),
+                    "end": m.end(),
+                    "category": category,
+                    "severity": info["severity"],
+                })
 
         if matched:
             risk_factors.append({
@@ -209,6 +246,11 @@ def analyze_text(text: str) -> Dict:
     # ── Salary analysis ──────────────────────────────────────────────────────
     salary_risks = _analyze_salary(text)
     risk_factors.extend(salary_risks)
+
+    # ── Negated scam claims ("no fee", "no registration charge") count as a
+    #    mild legitimacy signal — explicitly disclaiming a fee is a real
+    #    pattern legitimate recruiters use. ──────────────────────────────────
+    legit_count += min(negated_matches_count, 3)  # cap contribution
 
     # ── Calculate rule-based score ───────────────────────────────────────────
     rule_score = _calculate_score(risk_factors, legit_count)
