@@ -1,0 +1,92 @@
+"""
+JobShield AI — FastAPI Application Entry Point
+
+Main application with CORS, router registration, and startup events.
+"""
+
+import os
+import sys
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(__file__))
+
+from routers import analyze, report
+from database.db import init_db
+from services.nlp_analyzer import get_analyzer
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application startup and shutdown events."""
+    # Startup
+    print("🚀 Starting JobShield AI Backend...")
+    init_db()
+    # Pre-load ML model
+    try:
+        analyzer = get_analyzer()
+        if analyzer._loaded:
+            print("✅ ML model ready")
+        else:
+            print("⚠️  ML model not loaded — run 'python ml/train_model.py' first")
+    except Exception as e:
+        print(f"⚠️  ML model loading failed: {e}")
+
+    yield
+    # Shutdown
+    print("👋 Shutting down JobShield AI Backend...")
+
+
+app = FastAPI(
+    title="JobShield AI",
+    description="AI-powered fake job & internship scam detection platform",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# ─── CORS ────────────────────────────────────────────────────────────────────────
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",   # Vite dev server
+        "http://localhost:3000",   # Alt dev server
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─── Routes ──────────────────────────────────────────────────────────────────────
+
+app.include_router(analyze.router)
+app.include_router(report.router)
+
+
+@app.get("/")
+async def root():
+    return {
+        "name": "JobShield AI",
+        "version": "1.0.0",
+        "status": "running",
+        "docs": "/docs",
+    }
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint."""
+    analyzer = get_analyzer()
+    return {
+        "status": "healthy",
+        "ml_model_loaded": analyzer._loaded,
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

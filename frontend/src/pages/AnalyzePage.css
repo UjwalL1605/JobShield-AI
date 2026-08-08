@@ -1,0 +1,251 @@
+.analyze-page {
+  padding-bottom: 64px;
+}
+
+.analyze-header {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+
+.analyze-title {
+  font-size: 2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.text-gradient-icon {
+  color: var(--primary-400);
+}
+
+.analyze-subtitle {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+}
+
+.analyze-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ─── Input Panel ────────────────────────────────────────────────────────────── */
+
+.analyze-textarea {
+  min-height: 260px;
+  font-size: 0.9rem;
+}
+
+.char-count {
+  float: right;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.analyze-error {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: #fca5a5;
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+}
+
+.analyze-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spinning {
+  animation: rotate-slow 1s linear infinite;
+}
+
+/* ─── Results Panel ──────────────────────────────────────────────────────────── */
+
+.results-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analyze-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.analyze-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 32px;
+  text-align: center;
+}
+
+.analyze-empty-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-xl);
+  color: var(--primary-400);
+}
+
+.analyze-empty h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* ─── Score Breakdown ────────────────────────────────────────────────────────── */
+
+.score-breakdown {
+  padding: 24px;
+}
+
+.breakdown-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.breakdown-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.breakdown-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.breakdown-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.breakdown-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.breakdown-bar-ml {
+  background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+}
+
+.breakdown-bar-rule {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.breakdown-value {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  width: 40px;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+/* ─── Known Warning ──────────────────────────────────────────────────────────── */
+
+.known-warning {
+  padding: 20px 24px;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.known-warning h4 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #fca5a5;
+}
+
+.known-warning-text {
+  font-size: 0.875rem;
+  color: #fca5a5;
+}
+
+/* ─── ML Features ────────────────────────────────────────────────────────────── */
+
+.ml-features {
+  padding: 24px;
+}
+
+.ml-features-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.ml-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ml-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+
+.ml-feature-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.ml-feature-score {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 60px;
+  text-align: right;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .analyze-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .analyze-title {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,191 @@
+.about-page {
+  padding-bottom: 64px;
+}
+
+.about-header {
+  text-align: center;
+  padding: 40px 0 48px;
+}
+
+.about-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.about-subtitle {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Pipeline ───────────────────────────────────────────────────────────────── */
+
+.pipeline-section {
+  margin-bottom: 48px;
+}
+
+.pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.pipeline-step {
+  position: relative;
+  padding: 24px 16px;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.pipeline-step:hover {
+  background: var(--surface-hover);
+  transform: translateY(-4px);
+}
+
+.pipeline-step-number {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: 50%;
+}
+
+.pipeline-step-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  margin: 0 auto 12px;
+}
+
+.pipeline-step-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.pipeline-step-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.pipeline-arrow {
+  display: none; /* Show on desktop via media query if needed */
+}
+
+/* ─── Tech Stack ─────────────────────────────────────────────────────────────── */
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.tech-card {
+  padding: 24px;
+}
+
+.tech-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-400);
+  margin-bottom: 12px;
+}
+
+.tech-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tech-card li {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding-left: 16px;
+  position: relative;
+}
+
+.tech-card li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--primary-400);
+  font-weight: 700;
+}
+
+/* ─── FAQ ────────────────────────────────────────────────────────────────────── */
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.faq-card {
+  padding: 24px;
+}
+
+.faq-question {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.faq-answer {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ─── CTA ────────────────────────────────────────────────────────────────────── */
+
+.about-cta {
+  margin-top: 48px;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tech-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .about-title {
+    font-size: 1.75rem;
+  }
+
+  .pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tech-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+}
