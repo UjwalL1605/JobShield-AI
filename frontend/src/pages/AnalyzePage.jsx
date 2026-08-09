@@ -4,6 +4,7 @@ import FileUpload from '../components/FileUpload'
 import ResultCard from '../components/ResultCard'
 import RiskFactorTable from '../components/RiskFactorTable'
 import HighlightedText from '../components/HighlightedText'
+import WebIntelligenceCard from '../components/WebIntelligenceCard'
 import { analyzeText, analyzeScreenshot } from '../api/client'
 import './AnalyzePage.css'
 
@@ -242,6 +243,11 @@ function AnalyzePage() {
                       <p key={idx} className="known-warning-text">{w.message}</p>
                     ))}
                   </div>
+                )}
+
+                {/* Web & Entity Intelligence (Google Search Verification & Domain Checks) */}
+                {result.web_intelligence && (
+                  <WebIntelligenceCard webIntelligence={result.web_intelligence} />
                 )}
 
                 <RiskFactorTable

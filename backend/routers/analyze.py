@@ -13,6 +13,7 @@ from services.rule_engine import analyze_text as rule_analyze, get_trust_level
 from services.email_checker import analyze_emails_in_text
 from services.salary_checker import check_salary
 from services.ocr_service import extract_text_from_image
+from services.web_verifier import analyze_web_intelligence
 from database.db import check_text_for_known_scams
 
 router = APIRouter(prefix="/api/analyze", tags=["Analysis"])
@@ -36,6 +37,7 @@ class AnalysisResponse(BaseModel):
     salary_analysis: dict
     known_scam_warnings: list
     ml_top_features: list
+    web_intelligence: dict
     original_text: str
     source_type: str
 
@@ -112,7 +114,7 @@ async def analyze_screenshot_endpoint(
 # ─── Core Analysis Logic ────────────────────────────────────────────────────────
 
 def _run_analysis(text: str, source_type: str) -> dict:
-    """Run complete scam analysis pipeline on text."""
+    """Run complete scam analysis pipeline on text with ML, rules, and web intelligence."""
 
     # 1. ML Model prediction
     analyzer = get_analyzer()
@@ -130,22 +132,38 @@ def _run_analysis(text: str, source_type: str) -> dict:
     # 5. Check against known scam database
     known_warnings = check_text_for_known_scams(text)
 
-    # 6. Combine scores (weighted average)
+    # 6. Web & Entity Intelligence (Google Search & Domain Reputation)
+    web_intel = analyze_web_intelligence(text, source_type)
+
+    # 7. Combine scores (weighted average + domain/threat intelligence)
     ml_score = ml_result["ml_score"]
     rule_score = rule_result["rule_score"]
 
-    # Weight: 40% ML, 50% rules, 10% known scam boost
-    combined_score = (ml_score * 0.65) + (rule_score * 0.35)
+    combined_score = (ml_score * 0.60) + (rule_score * 0.40)
 
-    # Boost if known scam identifiers found
+    # Boost for web intelligence signals (brand impersonation, high-risk TLDs)
+    if web_intel.get("risk_boost"):
+        combined_score += web_intel["risk_boost"]
+
+    # Boost if known scam identifiers found in threat registry
     if known_warnings:
-        combined_score += 15  # Significant boost
+        combined_score += 20  # Significant boost for known threat
 
     # Boost for email/salary red flags
     if email_result.get("overall_risk") == "high":
-        combined_score += 8
+        combined_score += 10
     if salary_result.get("risk_level") == "high":
         combined_score += 8
+
+    # Append web intelligence risk signals to itemized risk factors
+    combined_risk_factors = list(rule_result["risk_factors"])
+    for sig in web_intel.get("risk_signals", []):
+        combined_risk_factors.append({
+            "category": sig["type"],
+            "severity": sig["severity"],
+            "description": sig["title"],
+            "matches": [sig["detail"]],
+        })
 
     combined_score = min(100.0, max(0.0, combined_score))
     trust_level = get_trust_level(combined_score)
@@ -155,12 +173,13 @@ def _run_analysis(text: str, source_type: str) -> dict:
         "trust_level": trust_level,
         "ml_score": ml_score,
         "rule_score": round(rule_score, 1),
-        "risk_factors": rule_result["risk_factors"],
+        "risk_factors": combined_risk_factors,
         "scam_keywords": rule_result["scam_keywords"],
         "email_analysis": email_result,
         "salary_analysis": salary_result,
         "known_scam_warnings": known_warnings,
         "ml_top_features": ml_result.get("top_features", []),
+        "web_intelligence": web_intel,
         "original_text": text,
         "source_type": source_type,
     }

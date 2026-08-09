@@ -6,9 +6,15 @@ Provides lookup functionality to warn future users.
 """
 
 import os
+import sys
 import sqlite3
 from datetime import datetime
 from typing import Dict, List, Optional
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "scam_reports.db")
