@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom'
 import {
   Shield, Send, Loader2, RotateCcw, Clipboard,
   Sparkles, AlertTriangle, CheckCircle2, FileText,
-  Camera, Zap, ArrowRight, Building2, HelpCircle
+  Camera, Zap, ArrowRight, Building2, HelpCircle,
+  ShieldAlert, Brain
 } from 'lucide-react'
 import FileUpload from '../components/FileUpload'
 import ResultCard from '../components/ResultCard'
