@@ -1,19 +1,22 @@
 .result-card {
   padding: 32px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .result-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .result-card-title {
-  font-size: 1.125rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .result-gauge-container {
@@ -21,17 +24,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 16px 0 24px;
+  justify-content: center;
+  margin: 12px 0 24px;
 }
 
 .result-gauge {
-  width: 160px;
-  height: 160px;
-  filter: url(#glow);
+  width: 170px;
+  height: 170px;
 }
 
 .result-gauge-progress {
   transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
 .result-gauge-value {
@@ -45,22 +49,22 @@
 }
 
 .result-score {
-  font-size: 2.75rem;
-  font-weight: 800;
+  font-size: 3rem;
+  font-weight: 900;
   line-height: 1;
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
 }
 
 .result-percent {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--text-secondary);
 }
 
 .result-gauge-label {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -69,11 +73,16 @@
 .result-detail {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   line-height: 1.5;
   text-align: left;
+  border: 1px solid currentColor;
+}
+
+[data-theme="light"] .result-detail {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
 }
