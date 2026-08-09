@@ -5,6 +5,7 @@ import ResultCard from '../components/ResultCard'
 import RiskFactorTable from '../components/RiskFactorTable'
 import HighlightedText from '../components/HighlightedText'
 import WebIntelligenceCard from '../components/WebIntelligenceCard'
+import GeminiSearchCard from '../components/GeminiSearchCard'
 import { analyzeText, analyzeScreenshot } from '../api/client'
 import './AnalyzePage.css'
 
@@ -243,6 +244,11 @@ function AnalyzePage() {
                       <p key={idx} className="known-warning-text">{w.message}</p>
                     ))}
                   </div>
+                )}
+
+                {/* Google AI Deep Search Grounding Card */}
+                {result.gemini_analysis && (
+                  <GeminiSearchCard geminiAnalysis={result.gemini_analysis} />
                 )}
 
                 {/* Web & Entity Intelligence (Google Search Verification & Domain Checks) */}

@@ -70,6 +70,45 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
+/* ─── Light Mode Theme Palette ─────────────────────────────────────────────────── */
+
+[data-theme="light"] {
+  /* Surfaces */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+  --surface: rgba(15, 23, 42, 0.04);
+  --surface-hover: rgba(15, 23, 42, 0.08);
+  --surface-active: rgba(15, 23, 42, 0.12);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-hover: rgba(15, 23, 42, 0.22);
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-inverse: #f8fafc;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+
+  /* Risk Backgrounds */
+  --safe-bg: rgba(16, 185, 129, 0.16);
+  --likely-safe-bg: rgba(52, 211, 153, 0.16);
+  --suspicious-bg: rgba(245, 158, 11, 0.16);
+  --high-risk-bg: rgba(249, 115, 22, 0.16);
+  --very-high-risk-bg: rgba(239, 68, 68, 0.16);
+}
+
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 60% at 50% 90%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
+}
+
 /* ─── Global Reset ───────────────────────────────────────────────────────────── */
 
 *, *::before, *::after {

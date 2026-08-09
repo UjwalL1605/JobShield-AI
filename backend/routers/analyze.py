@@ -14,6 +14,7 @@ from services.email_checker import analyze_emails_in_text
 from services.salary_checker import check_salary
 from services.ocr_service import extract_text_from_image
 from services.web_verifier import analyze_web_intelligence
+from services.gemini_search_analyzer import analyze_with_gemini_search
 from database.db import check_text_for_known_scams
 
 router = APIRouter(prefix="/api/analyze", tags=["Analysis"])
@@ -38,6 +39,7 @@ class AnalysisResponse(BaseModel):
     known_scam_warnings: list
     ml_top_features: list
     web_intelligence: dict
+    gemini_analysis: Optional[dict] = None
     original_text: str
     source_type: str
 
@@ -132,14 +134,22 @@ def _run_analysis(text: str, source_type: str) -> dict:
     # 5. Check against known scam database
     known_warnings = check_text_for_known_scams(text)
 
-    # 6. Web & Entity Intelligence (Google Search & Domain Reputation)
+    # 6. Web & Entity Intelligence (Domain Reputation & Live Google Search Links)
     web_intel = analyze_web_intelligence(text, source_type)
 
-    # 7. Combine scores (weighted average + domain/threat intelligence)
+    # 7. Google Gemini AI Deep Search Grounding (Live AI Search)
+    gemini_result = analyze_with_gemini_search(text, source_type)
+
+    # 8. Combine scores (weighted average + domain/threat intelligence)
     ml_score = ml_result["ml_score"]
     rule_score = rule_result["rule_score"]
 
-    combined_score = (ml_score * 0.60) + (rule_score * 0.40)
+    if gemini_result.get("available") and "scam_score" in gemini_result:
+        # Fuse Gemini search score with local ML and rules
+        gemini_score = gemini_result["scam_score"]
+        combined_score = (gemini_score * 0.40) + (ml_score * 0.35) + (rule_score * 0.25)
+    else:
+        combined_score = (ml_score * 0.60) + (rule_score * 0.40)
 
     # Boost for web intelligence signals (brand impersonation, high-risk TLDs)
     if web_intel.get("risk_boost"):
@@ -180,6 +190,7 @@ def _run_analysis(text: str, source_type: str) -> dict:
         "known_scam_warnings": known_warnings,
         "ml_top_features": ml_result.get("top_features", []),
         "web_intelligence": web_intel,
+        "gemini_analysis": gemini_result,
         "original_text": text,
         "source_type": source_type,
     }

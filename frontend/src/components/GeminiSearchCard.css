@@ -1,0 +1,204 @@
+.gemini-card {
+  padding: 24px;
+  margin-top: 16px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="light"] .gemini-card {
+  background: linear-gradient(135deg, rgba(243, 232, 255, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(168, 85, 247, 0.35);
+}
+
+.gemini-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gemini-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gemini-sparkle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: white;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+
+.gemini-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.gemini-model-tag {
+  font-size: 0.75rem;
+  color: #c084fc;
+  font-weight: 500;
+}
+
+[data-theme="light"] .gemini-model-tag {
+  color: #7e22ce;
+}
+
+/* ── Summary Box ───────────────────────────────────────────────────────────── */
+
+.gemini-summary-box {
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-left: 4px solid #a855f7;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.gemini-summary-text {
+  margin: 0;
+  font-size: 0.925rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────────── */
+
+.gemini-section {
+  margin-bottom: 14px;
+}
+
+.gemini-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #c084fc;
+  margin: 0 0 6px 0;
+}
+
+[data-theme="light"] .gemini-section-heading {
+  color: #7e22ce;
+}
+
+.gemini-section-content {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.gemini-evidence-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gemini-evidence-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.evidence-bullet {
+  color: #a855f7;
+  font-weight: bold;
+}
+
+/* ── Action Box ────────────────────────────────────────────────────────────── */
+
+.gemini-action-box {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+/* ── Grounded Sources ──────────────────────────────────────────────────────── */
+
+.gemini-sources-section {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.gemini-sources-heading {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gemini-sources-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gemini-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #d8b4fe;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="light"] .gemini-source-chip {
+  background: rgba(168, 85, 247, 0.1);
+  color: #6b21a8;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.gemini-source-chip:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+  color: white;
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .gemini-source-chip:hover {
+  color: #4c1d95;
+}
+
+.source-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-icon {
+  flex-shrink: 0;
+}

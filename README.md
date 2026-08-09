@@ -36,14 +36,23 @@ Employment scams targeting students, fresh graduates, and career switchers are a
 - **Explainable AI (XAI)**: Reveals the exact keywords and domain feature contributions with directional weights (scam vs. legitimate) for every analysis.
 - **Heuristic Rule Engine**: Multi-category regex inspection with negation handling (distinguishing *"no fee required"* from *"fee required"*).
 
-### 3. 🏢 Specialized Verification Modules
-- **Corporate Email Authenticator**: Flags recruiters claiming to be from Fortune 500 or top IT companies while using free public domains (`@gmail.com`, `@yahoo.com`, `@outlook.com`).
-- **Salary Anomaly Checker**: Evaluates stated compensation against realistic industry benchmarks for fresher, internship, data entry, and remote positions.
+### 3. ✨ Google AI Deep Search Grounding (Gemini)
+- **Live Real-Time Web Research**: Optionally queries **Google Gemini 2.5 Flash** with **Google Search Grounding** to research company legitimacy, investigate recruiter phone numbers/emails, and verify employer registration on the web in real-time.
+- **Web Source Citations**: Links directly to live Reddit, Glassdoor, Quora, and official corporate registry findings.
+- **100% Graceful Fallback**: Operates autonomously with local ML & rules when no API key is provided.
 
-### 4. 🗄️ Crowdsourced Threat Intelligence
-- **SQLite Registry**: Stores reported scam phone numbers, email addresses, UPI handles, phishing domains, and fake recruiters.
+### 4. 🏢 Web Intelligence & Brand Impersonation Detector
+- **MNC Impersonation Check**: Instantly catches scammers claiming to represent Google, Amazon, TCS, Infosys, Deloitte, etc. while using personal WhatsApp numbers or free `@gmail.com` accounts.
+- **Phishing Domain & TLD Inspector**: Flags high-risk scam TLDs (`.site`, `.xyz`, `.top`, `.online`) and masked URL shorteners (`bit.ly`, `tinyurl`).
+- **1-Click Live Threat Search**: Interactive buttons to search company scam complaints, Truecaller numbers, and Cybercrime Portal (`cybercrime.gov.in`) with one click.
+
+### 5. 🗄️ Crowdsourced Threat Intelligence
+- **SQLite Registry**: Stores 2,000+ verified scam phone numbers, email addresses, UPI handles, phishing domains, and fake recruiters.
 - **Instant Cross-Referencing**: Automatically matches incoming queries against known scam records.
 - **Community Reporting**: Allows victims and seekers to report new scams and protect the community.
+
+### 6. 🌓 Dark & Light Mode Theme Support
+- **Full Theme Switching**: Seamless toggle between sleek Cyberpunk Dark Mode and clean Modern Light Mode with system auto-detection and persistent storage.
 
 ---
 
