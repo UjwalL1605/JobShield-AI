@@ -1,9 +1,14 @@
 """
-JobShield AI — Synthetic Dataset Generator (v2)
+JobShield AI — Synthetic Dataset Generator (v3)
 
 Generates a labeled dataset for training the scam detection model.
 Each sample is tagged with a template_id so train/test can be split
 by template (prevents the model from just memorizing template shape).
+
+v3 adds legitimate freelance/gig-payment templates (client pays freelancer)
+and formal/bureaucratic legit phrasing (PPO calls, rejections, verification
+reminders, govt notices) to counterbalance false positives surfaced by a
+blind holdout evaluation (evaluate_blind.py).
 """
 
 import pandas as pd
@@ -63,6 +68,9 @@ SCAM_TEMPLATES = [
     "So excited to tell you - {company} said yes! They just need me to pay ₹{fee} for the 'training kit' before I start Monday. Has anyone else done this before, is this normal??",
     "Bro {company} is hiring, my friend joined last week, easy money {salary}/month, just DM {handle} they'll explain everything, no interview needed only basic details",
     "Received this today: '{company} welcomes you aboard! Complete your KYC via the link and deposit ₹{fee} refundable caution money to activate your ID card.'",
+    # ── Soft-fee freelance scams: candidate pays company for freelance "access" ──
+    "Hi, to finalize your freelance {project_type} project with us, please pay a ₹{fee} onboarding fee to access the client dashboard and start receiving tasks.",
+    "Freelance opportunity confirmed for {project_type}! Just deposit ₹{fee} as a refundable trust fee before we release your first project brief.",
 ]
 
 # ─── Legitimate Job Templates ──────────────────────────────────────────────────
@@ -108,6 +116,21 @@ LEGIT_TEMPLATES = [
     "Quick note from HR at {company} - your background verification came back clean, offer letter incoming this week. Excited to have you on the {role} team.",
     "We're a {industry} startup building {product}, looking for a {role} to join us early. Equity + salary, {years}+ years experience preferred. Email {corporate_email} if curious.",
     "{college} Career Services: {company} has posted a new {role} opening on the placement portal. Deadline to apply is {date}. Check your student login for details.",
+    # ── Freelance/gig payment direction: client pays freelancer (legit) ──
+    "Hi, thanks for taking up the {project_type} project! Payment will be ₹{gig_amount}, 50% upfront via UPI once we sign off on the brief, remaining on delivery. Let me know your UPI ID to send the advance.",
+    "Freelance opportunity: {project_type} for a 2-week sprint. Budget ₹{gig_amount} fixed, paid via bank transfer in two milestones. DM your portfolio if interested.",
+    "We need a freelance {role} for a short-term contract, ₹{gig_amount}/month retainer, paid via NEFT on the 1st of every month. Send your rate card.",
+    "Hey, loved your portfolio! For the {project_type} gig we discussed, I'll pay ₹{gig_amount} total, half now as advance and half after final delivery. What's your UPI ID?",
+    "Looking for a freelance voiceover artist for a one-time project, ₹{gig_amount} flat fee, payment via bank transfer within 24 hours of delivery.",
+    "Client here from {platform} - confirming the {project_type} job at ₹{gig_amount}, milestone-based payment through the platform's escrow, first milestone released on approval.",
+    "Thanks for the quote! Let's proceed with ₹{gig_amount} for the {project_type} work, I'll send 30% advance via UPI today and rest on completion as agreed.",
+    "We're hiring a freelance content writer, ₹{gig_amount} per article, payments processed weekly via bank transfer, no fees or deposits required from your side.",
+    "Need a part time graphic designer, ₹{gig_amount}/month retainer, invoice us monthly, first payment released after your first deliverable is approved.",
+    # ── Formal/bureaucratic legit phrasing (PPO, rejection, verification, govt) ──
+    "Reminder: your pre-placement offer (PPO) confirmation call with {company} is scheduled for {time}. Please join via the link sent to your registered email.",
+    "Following up on your application to {company} - unfortunately this role has been put on hold internally due to budget changes. We'll reach out if it reopens. No action needed from you.",
+    "Reminder: complete your pre-employment verification form by {date}, this is standard for all new joiners at {company} and does not involve any payment, just document uploads on our internal portal.",
+    "{company} Recruitment Board Notice: exam admit cards have been released. Download only via the official recruitment website using your registration number. No other website or app is authorized.",
 ]
 
 # ─── Fill Values ─────────────────────────────────────────────────────────────────
@@ -129,6 +152,7 @@ LEGIT_COMPANIES = [
     "Adobe", "Salesforce", "SAP Labs", "ThoughtWorks", "Freshworks",
     "Zoho Corporation", "Razorpay", "PhonePe", "CRED", "Atlassian",
     "Goldman Sachs", "Morgan Stanley", "JP Morgan", "Deutsche Bank",
+    "HDFC Bank", "ICICI Bank",
 ]
 
 ROLES = [
@@ -190,11 +214,24 @@ HANDLES = [
     "megacorp_hiring", "fasttrack_jobs",
 ]
 
+PROJECT_TYPES = [
+    "logo design", "WordPress website", "explainer video edit",
+    "Instagram reel editing", "content writing", "voiceover recording",
+    "data entry for a research project", "UI mockup design",
+    "resume writing", "translation work",
+]
+
+FREELANCE_PLATFORMS = ["Upwork", "Fiverr", "Freelancer.com", "Truelancer", "our agency"]
+
+
 def _random_fee():
     return random.choice([499, 599, 799, 999, 1499, 1999, 2499, 2999, 4999, 5999, 9999])
 
 def _random_cert_fee():
     return random.choice([300, 500, 750, 1000, 1500])
+
+def _random_gig_amount():
+    return random.choice([1500, 2500, 3500, 5000, 8000, 10000, 12000, 15000, 20000])
 
 def _random_scam_salary():
     return random.choice([
@@ -236,6 +273,7 @@ def _fill_scam_template(template):
         name=random.choice(["Rahul", "Priya", "Amit", "Sneha", "Ravi", "Anjali"]),
         handle=random.choice(HANDLES),
         role=random.choice(ROLES),
+        project_type=random.choice(PROJECT_TYPES),
     )
 
 def _fill_legit_template(template):
@@ -271,10 +309,13 @@ def _fill_legit_template(template):
         vacancies=str(random.randint(5, 200)),
         qualification=random.choice(["B.Tech", "M.Tech", "BCA", "MCA", "B.Sc IT"]),
         age=str(random.randint(28, 35)),
+        project_type=random.choice(PROJECT_TYPES),
+        gig_amount=_random_gig_amount(),
+        platform=random.choice(FREELANCE_PLATFORMS),
     )
 
 def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
-    """Generate a balanced synthetic dataset, tagged with template_id for grouped splitting."""
+    """Generate a balanced synthetic dataset with strictly unique texts, tagged with template_id for grouped splitting."""
 
     if output_path is None:
         output_path = os.path.join(os.path.dirname(__file__), "data", "training_data.csv")
@@ -282,24 +323,42 @@ def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     data = []
+    seen_texts = set()
 
-    for _ in range(num_scam):
+    # Generate unique scam samples
+    attempts = 0
+    max_attempts = num_scam * 15
+    while len(data) < num_scam and attempts < max_attempts:
+        attempts += 1
         idx = random.randrange(len(SCAM_TEMPLATES))
-        text = _fill_scam_template(SCAM_TEMPLATES[idx])
-        data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
+        text = _fill_scam_template(SCAM_TEMPLATES[idx]).strip()
+        norm_key = " ".join(text.lower().split())
+        if norm_key not in seen_texts and len(text) > 10:
+            seen_texts.add(norm_key)
+            data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
 
-    for _ in range(num_legit):
+    scam_count = len(data)
+
+    # Generate unique legit samples
+    attempts = 0
+    max_attempts = num_legit * 15
+    while (len(data) - scam_count) < num_legit and attempts < max_attempts:
+        attempts += 1
         idx = random.randrange(len(LEGIT_TEMPLATES))
         try:
-            text = _fill_legit_template(LEGIT_TEMPLATES[idx])
+            text = _fill_legit_template(LEGIT_TEMPLATES[idx]).strip()
         except (KeyError, IndexError):
             continue
-        data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
+        norm_key = " ".join(text.lower().split())
+        if norm_key not in seen_texts and len(text) > 10:
+            seen_texts.add(norm_key)
+            data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
 
     random.shuffle(data)
     df = pd.DataFrame(data)
+    df = df.drop_duplicates(subset=["text"]).reset_index(drop=True)
     df.to_csv(output_path, index=False)
-    print(f"✅ Generated {len(df)} samples ({num_scam} scam, {len(df) - num_scam} legit)")
+    print(f"✅ Generated {len(df)} unique samples ({(df['label'] == 1).sum()} scam, {(df['label'] == 0).sum()} legit, 0 duplicates)")
     print(f"   {len(SCAM_TEMPLATES)} scam templates, {len(LEGIT_TEMPLATES)} legit templates")
     print(f"   Saved to: {output_path}")
     return df

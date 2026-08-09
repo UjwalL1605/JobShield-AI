@@ -122,8 +122,10 @@ class NLPAnalyzer:
 
         features = []
         for idx in top_idx:
+            raw_name = str(feature_names[idx])
+            clean_name = raw_name.replace("tfidf__", "").replace("domain__domain:", "domain:").replace("domain__", "")
             features.append({
-                "feature": feature_names[idx],
+                "feature": clean_name,
                 "contribution": round(float(contributions[idx]), 4),
                 "direction": "scam" if contributions[idx] > 0 else "legitimate",
             })

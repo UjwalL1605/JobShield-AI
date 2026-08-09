@@ -7,15 +7,15 @@
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **AI-Powered Fake Job & Internship Scam Detection Platform with Explainable AI (XAI) and Crowdsourced Threat Intelligence.**
+> **AI-Powered Fake Job & Internship Scam Detection Platform with Explainable AI (XAI), Domain-Aware Feature Engineering, and Crowdsourced Threat Intelligence.**
 
 ---
 
 ## 📌 Overview
 
-Employment scams targeting students, fresh graduates, and career switchers are at an all-time high. Fraudsters exploit job seekers through advance-fee schemes ("registration / training fees"), company impersonation, unrealistic compensation promises, and unsolicited WhatsApp / Telegram recruitment.
+Employment scams targeting students, fresh graduates, and career switchers are at an all-time high. Fraudsters exploit job seekers through advance-fee schemes ("registration / training fees", "refundable security deposits"), company impersonation, unrealistic salary promises, task-based investment scams, and unsolicited WhatsApp / Telegram recruitment.
 
-**JobShield AI** is an intelligent defense platform that analyzes job offers, interview invites, and chat screenshots to evaluate scam risks in seconds. It combines **Machine Learning (NLP)**, an **Extensive Heuristic Rule Engine**, **Optical Character Recognition (OCR)**, and a **Live Scam Registry** to deliver accurate risk scores and actionable explanations.
+**JobShield AI** is an intelligent defense platform that analyzes job offers, interview invites, and chat screenshots to evaluate scam risks in seconds. It combines **Machine Learning with Domain Feature Engineering (NLP)**, an **Extensive Heuristic Rule Engine**, **Optical Character Recognition (OCR)**, and a **Live Threat Intelligence Registry** to deliver accurate risk scores and actionable explanations.
 
 ---
 
@@ -26,16 +26,15 @@ Employment scams targeting students, fresh graduates, and career switchers are a
 - **Screenshot OCR Extraction**: Upload screenshots from WhatsApp, Telegram, LinkedIn, or email. Powered by **EasyOCR** with image preprocessing (upscaling, sharpening, and contrast tuning) to extract and process text.
 
 ### 2. 🧠 Multi-Layer Hybrid Detection Engine
-- **TF-IDF + Logistic Regression ML Model**: Trained on thousands of verified scam and legitimate recruitment communications.
-- **Explainable AI (XAI)**: Reveals the exact keywords and directional feature weights contributing to the prediction.
-- **Heuristic Rule Engine**: Inspects 8+ distinct scam categories:
-  - 💸 **Advance Fee Requests**: "Registration fee", "laptop security deposit", "training charge", etc.
-  - ⏳ **High-Pressure Urgency**: "Immediate joining in 2 hours", "limited seats", "expires today".
-  - 🎯 **Unrealistic Guarantees**: "100% placement without interview", "no skills or resume needed".
-  - 💳 **Direct Payment / UPI Demands**: `@paytm`, `@gpay`, `@phonepe`, UPI handles, and direct bank transfers.
-  - 📱 **Suspicious Communication Channels**: Unofficial Telegram / WhatsApp / Instagram DM recruitment.
-  - 🏢 **Brand Impersonation Signals**: Unverified claims representing Tier-1 tech or consulting firms.
-  - 🎭 **Emotional Manipulation / Lottery Hooks**: "Congratulations! You won / You are shortlisted".
+- **Composite ML Pipeline (`FeatureUnion`)**: Combines high-capacity n-gram TF-IDF vectorization (1-2 ngrams, sublinear TF) with a custom **`ScamDomainFeatureExtractor`** that inspects:
+  - 💸 **Advance Fee / Deposit Cues**: Registration fees, caution money, training kit charges, platform fees, and transfer triggers (`pay ₹...`).
+  - 🪪 **KYC & Credential Harvesting**: Requests for Aadhaar, PAN card, bank account number, IFSC, OTP, and net-banking credentials.
+  - ⏳ **High-Pressure Urgency**: "Limited seats", "offer expires today", "within 24 hours", "final call".
+  - 📱 **Off-Platform Redirection**: Unofficial Telegram channels (`t.me`), WhatsApp numbers, Instagram DMs, and URL shorteners (`bit.ly`, `tinyurl`).
+  - 🎯 **Unrealistic Guarantees & Task Scams**: "100% placement without interview", daily salary payouts, app rating / video liking task scams, crypto trading schemes.
+  - 🛡️ **Legitimacy Dampeners**: Explicit protections such as "no registration fee", "equal opportunity employer", and standard provident fund/benefits notices.
+- **Explainable AI (XAI)**: Reveals the exact keywords and domain feature contributions with directional weights (scam vs. legitimate) for every analysis.
+- **Heuristic Rule Engine**: Multi-category regex inspection with negation handling (distinguishing *"no fee required"* from *"fee required"*).
 
 ### 3. 🏢 Specialized Verification Modules
 - **Corporate Email Authenticator**: Flags recruiters claiming to be from Fortune 500 or top IT companies while using free public domains (`@gmail.com`, `@yahoo.com`, `@outlook.com`).
@@ -45,6 +44,27 @@ Employment scams targeting students, fresh graduates, and career switchers are a
 - **SQLite Registry**: Stores reported scam phone numbers, email addresses, UPI handles, phishing domains, and fake recruiters.
 - **Instant Cross-Referencing**: Automatically matches incoming queries against known scam records.
 - **Community Reporting**: Allows victims and seekers to report new scams and protect the community.
+
+---
+
+## 📊 Dataset & Model Performance
+
+### 📁 Consolidated & Deduplicated Dataset
+The model is trained on a **consolidated, strictly deduplicated dataset of 6,340 unique samples** (3,079 scam, 3,261 legit) with **2,357 unique template groups**:
+- **Real-World Legitimate Postings**: 1,415 genuine corporate hiring emails and detailed LinkedIn job descriptions (Tesco, IBM, Amazon, Healthify, Meta).
+- **Indian Job Scam Patterns**: 1,490 fake job offer scam communications with realistic INR registration fees (₹300–₹1,500), UPI transfers, and Aadhaar/OTP requests.
+- **Diverse Scam Archetypes**: Placement consultancy fees, fake MNC impersonation, WFH task scams, overseas visa fraud, identity harvesting, and BPO bulk hiring.
+- **100% Deduplicated**: Enforces strict text uniqueness (zero exact or whitespace-normalized duplicates) to prevent memorization.
+
+### 📈 Honest Evaluation Benchmarks
+
+| Benchmark / Evaluation Set | Test Samples | Accuracy | Precision | Recall | F1 Score | Evaluation Method |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Grouped Test Split** | 1,273 | **94.19%** | **92.46%** | **97.62%** | **0.9497** | Unseen template groups only |
+| **5-Fold Group Cross Validation** | 6,340 | — | — | — | **0.9592 ± 0.0135** | `GroupKFold` across template IDs |
+| **Real-World Holdout ([evaluate_real.py](backend/ml/evaluate_real.py))** | 27 | **92.59%** | **100.00%** | **84.62%** | **0.9167** | Hand-written real-world cases |
+| **Blind Holdout ([evaluate_blind.py](backend/ml/evaluate_blind.py))** | 46 | **91.30%** | **92.31%** | **92.31%** | **0.9231** | Fresh, untuned edge cases |
+| **End-to-End Production Pipeline ([evaluate_combined.py](backend/ml/evaluate_combined.py))** | 27 | **92.59%** | **100.00%** | **84.62%** | **0.9167** | Full ML + Rules + Database fusion |
 
 ---
 
@@ -59,14 +79,14 @@ graph TD
     D --> E
     
     subgraph "Detection Engine"
-        E --> F[NLP Classifier / TF-IDF Model]
+        E --> F[NLP Classifier / FeatureUnion Model]
         E --> G[Heuristic Rule Engine]
         E --> H[Corporate Email Checker]
         E --> I[Salary Benchmark Checker]
         E --> J[SQLite Threat Intelligence DB]
     end
     
-    F & G & H & I & J --> K[Composite Scam Probability & Explainability]
+    F & G & H & I & J --> K[Composite Scam Probability & XAI Features]
     K --> L[React Dashboard UI]
 ```
 
@@ -87,44 +107,50 @@ graph TD
 ```
 JobShield-AI/
 ├── backend/
-│   ├── main.py                  # FastAPI application entry point & CORS configuration
-│   ├── requirements.txt         # Python dependencies
+│   ├── main.py                     # FastAPI application entry point & CORS configuration
+│   ├── requirements.txt            # Python dependencies
 │   ├── database/
-│   │   ├── db.py                # SQLite database management (WAL mode)
-│   │   └── scam_reports.db      # Scam reports database
+│   │   ├── db.py                   # SQLite database management (WAL mode)
+│   │   └── scam_reports.db         # Scam reports database
 │   ├── ml/
-│   │   ├── dataset_generator.py # Synthetic dataset generation script
-│   │   ├── train_model.py       # Model training & serialization pipeline
-│   │   ├── data/                # Dataset storage (training_data.csv)
-│   │   └── models/              # Serialized artifacts (TF-IDF & Classifier)
+│   │   ├── consolidate_dataset.py  # Dataset merger & deduplication pipeline
+│   │   ├── dataset_generator.py    # Synthetic dataset generator (uniqueness-enforced)
+│   │   ├── train_model.py          # FeatureUnion + Logistic Regression training
+│   │   ├── evaluate_real.py        # Real-world holdout evaluation script
+│   │   ├── evaluate_blind.py       # Blind holdout evaluation script
+│   │   ├── evaluate_combined.py    # End-to-end full pipeline evaluation script
+│   │   ├── feature_extractor.py    # ML feature extractor adapter
+│   │   ├── data/                   # Consolidated training data & source datasets
+│   │   └── models/                 # Serialized production artifacts (Pipeline & Model)
 │   ├── routers/
-│   │   ├── analyze.py           # Endpoints for text & screenshot analysis
-│   │   └── report.py            # Endpoints for scam reporting & queries
+│   │   ├── analyze.py              # Endpoints for text & screenshot analysis
+│   │   └── report.py               # Endpoints for scam reporting & threat lookups
 │   └── services/
-│       ├── rule_engine.py       # Heuristic pattern matching & scoring
-│       ├── nlp_analyzer.py      # TF-IDF + Logistic Regression with XAI
-│       ├── email_checker.py     # Email authenticity & impersonation detection
-│       ├── salary_checker.py    # Salary benchmark & anomaly extraction
-│       └── ocr_service.py       # EasyOCR pipeline with image preprocessing
+│       ├── feature_extractor.py    # ScamDomainFeatureExtractor (domain signals)
+│       ├── nlp_analyzer.py         # NLP analyzer with XAI feature contributions
+│       ├── rule_engine.py          # Heuristic pattern matching & negation scoring
+│       ├── email_checker.py        # Email authenticity & domain verification
+│       ├── salary_checker.py       # Salary benchmark & anomaly extraction
+│       └── ocr_service.py          # EasyOCR pipeline with image preprocessing
 │
 └── frontend/
-    ├── package.json             # Frontend dependencies & npm scripts
-    ├── index.html               # Main HTML template
-    ├── vite.config.ts           # Vite build config
+    ├── package.json                # Frontend dependencies & npm scripts
+    ├── index.html                  # Main HTML template
+    ├── vite.config.ts              # Vite build config
     └── src/
-        ├── App.jsx              # Main router & app layout
+        ├── App.jsx                 # Main router & app layout
         ├── api/
-        │   └── client.js        # Axios API client wrapper
+        │   └── client.js           # Axios API client wrapper
         ├── pages/
-        │   ├── HomePage.jsx     # Landing page with live statistics
-        │   ├── AnalyzePage.jsx  # Interactive text & OCR scanner
-        │   ├── ReportPage.jsx   # Scam database lookup & report submission
-        │   └── AboutPage.jsx    # Educational scam guide & red flags
+        │   ├── HomePage.jsx        # Landing page with live statistics
+        │   ├── AnalyzePage.jsx     # Interactive text & OCR scanner
+        │   ├── ReportPage.jsx      # Scam database lookup & report submission
+        │   └── AboutPage.jsx       # Educational scam guide & red flags
         └── components/
-            ├── Navbar.jsx       # Global header navigation
-            ├── Footer.jsx       # Global footer
-            ├── FileUpload.jsx   # Drag-and-drop screenshot uploader
-            ├── ResultCard.jsx   # Risk gauge & verdict summary
+            ├── Navbar.jsx          # Global header navigation
+            ├── Footer.jsx          # Global footer
+            ├── FileUpload.jsx      # Drag-and-drop screenshot uploader
+            ├── ResultCard.jsx      # Risk gauge & verdict summary
             ├── RiskFactorTable.jsx # Itemized risk breakdown
             └── HighlightedText.jsx # Visual text highlighter for scam phrases
 ```
@@ -153,7 +179,7 @@ cd JobShield-AI
 # Navigate to backend directory
 cd backend
 
-# Create and activate virtual environment (optional but recommended)
+# Create and activate virtual environment
 python -m venv venv
 # On Windows:
 venv\Scripts\activate
@@ -163,8 +189,14 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Train / build ML models (if not already trained)
+# (Optional) Consolidate dataset & retrain ML model
+python ml/consolidate_dataset.py
 python ml/train_model.py
+
+# (Optional) Run evaluation benchmarks
+python ml/evaluate_real.py
+python ml/evaluate_blind.py
+python ml/evaluate_combined.py
 
 # Start FastAPI server
 python main.py
