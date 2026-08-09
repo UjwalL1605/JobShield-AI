@@ -7,15 +7,23 @@ Supports WhatsApp, Telegram, LinkedIn, Gmail, SMS, and Instagram DM screenshots.
 
 import io
 import os
+import sys
+import shutil
+from pathlib import Path
 from typing import Optional, Dict
 from PIL import Image, ImageEnhance, ImageFilter
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 # EasyOCR is loaded lazily to avoid slow startup
 _reader = None
 
 
 def _get_reader():
-    """Lazy-load EasyOCR reader."""
+    """Lazy-load EasyOCR reader with auto-recovery for corrupt cache."""
     global _reader
     if _reader is None:
         try:
@@ -25,12 +33,27 @@ def _get_reader():
                 gpu=False,
                 verbose=False,
             )
-            print("✅ EasyOCR reader loaded")
+            print("[OK] EasyOCR reader loaded successfully")
         except ImportError:
-            print("⚠️  EasyOCR not installed. Install with: pip install easyocr")
+            print("[WARN] EasyOCR not installed. Install with: pip install easyocr")
             return None
         except Exception as e:
-            print(f"⚠️  EasyOCR initialization failed: {e}")
+            # Handle corrupt model cache automatically
+            model_dir = Path.home() / ".EasyOCR" / "model"
+            if "BadZipFile" in str(type(e).__name__) or "CRC" in str(e):
+                print("[WARN] Corrupted OCR model cache detected. Cleaning up and retrying...")
+                try:
+                    if model_dir.exists():
+                        for f in model_dir.glob("*.zip"):
+                            f.unlink(missing_ok=True)
+                    import easyocr
+                    _reader = easyocr.Reader(["en"], gpu=False, verbose=False)
+                    print("[OK] EasyOCR reader recovered and loaded")
+                    return _reader
+                except Exception as retry_err:
+                    print(f"[WARN] EasyOCR retry failed: {retry_err}")
+                    return None
+            print(f"[WARN] EasyOCR initialization failed: {e}")
             return None
     return _reader
 
