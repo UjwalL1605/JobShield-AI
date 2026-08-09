@@ -1,13 +1,23 @@
 # JobShield AI 🛡️
 
+[![Live Frontend](https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://job-shield-ai.vercel.app)
+[![Live Backend](https://img.shields.io/badge/Live_API-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://jobshield-ai-4oev.onrender.com)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
+[![Gemini](https://img.shields.io/badge/Google_AI-Gemini_2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **AI-Powered Fake Job & Internship Scam Detection Platform with Explainable AI (XAI), Domain-Aware Feature Engineering, and Crowdsourced Threat Intelligence.**
+> **AI-Powered Fake Job & Internship Scam Detection Platform with Explainable AI (XAI), Domain-Aware Feature Engineering, Google Search Grounding, and Crowdsourced Threat Intelligence.**
+
+---
+
+## 🌐 Live Production Links
+- 🚀 **Live Web Application**: [https://job-shield-ai.vercel.app](https://job-shield-ai.vercel.app)
+- ⚙️ **Live Backend API**: [https://jobshield-ai-4oev.onrender.com](https://jobshield-ai-4oev.onrender.com)
+- 📖 **Interactive Swagger Docs**: [https://jobshield-ai-4oev.onrender.com/docs](https://jobshield-ai-4oev.onrender.com/docs)
 
 ---
 
