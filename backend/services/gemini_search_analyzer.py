@@ -52,43 +52,40 @@ def analyze_with_gemini_search(text: str, source_type: Optional[str] = "job_post
         }
 
     prompt = f"""
-You are an elite cyber threat intelligence analyst and employment fraud investigator for JobShield AI.
-Your mission is to perform a real-time Google Search investigation on this job offer / recruiter communication to determine if it is a SCAM or LEGITIMATE.
-
-INPUT MESSAGE ({source_type}):
+Analyze this job message for scams using real-time Google search investigation.
+MESSAGE ({source_type}):
 \"\"\"
 {text}
 \"\"\"
 
-INVESTIGATION TASKS (Use Google Search):
-1. Extract any Company Names, Recruiter Emails, Phone Numbers, Domains, or Telegram/UPI handles.
-2. Search Google for the company name + "scam" / "fake job" / "reviews" / "Glassdoor" / "Reddit".
-3. Check if the company is legitimate, registered, or an impersonated brand.
-4. Check if the contact method (free Gmail, WhatsApp, Telegram) is inconsistent with genuine recruitment.
-5. Provide a definitive scam probability (0-100), verdict, itemized evidence, and action recommendations.
+TASKS (Search Google):
+1. Search company name + "scam" / "fake job" / "reviews" / "Glassdoor" / "Reddit".
+2. Check if the entity is registered or an impersonated brand.
+3. Check for scam red flags (advance fee, unrealistic salary, WhatsApp recruitment).
 
-CRITICAL REQUIREMENT: Return ONLY a valid JSON object matching this exact structure:
+Return ONLY a valid JSON object matching this exact schema:
 {{
     "is_scam": true or false,
     "scam_score": 0 to 100,
     "trust_level": "Safe" | "Likely Safe" | "Suspicious" | "High Risk" | "Very High Risk",
-    "verdict_summary": "Concise 1-2 sentence executive summary of findings.",
-    "company_reputation": "Summary of company legitimacy and web footprint found via Google.",
-    "scam_indicators_found": ["List of specific red flags or legitimacy proofs identified"],
-    "recommended_action": "Clear actionable safety advice for the candidate."
+    "verdict_summary": "1-2 sentence summary of search findings.",
+    "company_reputation": "Brief summary of company web presence and legitimacy.",
+    "scam_indicators_found": ["Key findings or evidence from search"],
+    "recommended_action": "Actionable advice for the candidate."
 }}
 """
 
     try:
         from google.genai import types
 
-        # Call Gemini with Google Search Grounding
+        # Call Gemini with Google Search Grounding & budget=0 for ultra-fast latency
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.2,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                temperature=0.1,
             ),
         )
 

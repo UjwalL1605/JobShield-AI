@@ -195,9 +195,9 @@ function AnalyzePage() {
             {loading && (
               <div className="analyze-loading glass">
                 <div className="spinner"></div>
-                <p>Running AI analysis pipeline...</p>
+                <p>Running Multi-Layer Scam Investigation...</p>
                 <span className="text-muted" style={{ fontSize: '0.8125rem' }}>
-                  ML Model → Rule Engine → Email Check → Salary Validation
+                  ML Classifier → Rule Engine → Domain Verifier → ✨ Live Google AI Search
                 </span>
               </div>
             )}
