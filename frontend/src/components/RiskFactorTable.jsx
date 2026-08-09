@@ -101,10 +101,10 @@ function RiskFactorTable({ riskFactors, emailAnalysis, salaryAnalysis }) {
             {expandedIdx === idx && (
               <div className="risk-row-detail animate-fade-in">
                 <p className="risk-row-desc">{factor.description}</p>
-                {factor.matched_keywords && factor.matched_keywords.length > 0 && (
+                {(factor.matched_keywords || factor.matches) && (factor.matched_keywords || factor.matches).length > 0 && (
                   <div className="risk-row-keywords">
                     <span className="risk-row-keywords-label">Matched:</span>
-                    {factor.matched_keywords.map((kw, i) => (
+                    {(factor.matched_keywords || factor.matches).map((kw, i) => (
                       <code key={i} className="risk-keyword-chip">{kw}</code>
                     ))}
                   </div>
