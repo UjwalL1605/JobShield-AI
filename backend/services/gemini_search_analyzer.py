@@ -9,11 +9,13 @@ known scam reports on Reddit, Glassdoor, Quora, and official registries.
 import os
 import re
 import json
+from pathlib import Path
 from typing import Dict, Optional
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from backend/.env explicitly
+ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
 
 _client = None
 
