@@ -42,12 +42,13 @@ const trustConfig = {
 
 function ResultCard({ scamProbability, trustLevel }) {
   const [animatedScore, setAnimatedScore] = useState(0)
-  const config = trustConfig[trustLevel] || trustConfig['Suspicious']
-  const Icon = config.icon
+  const cleanTrustLevel = (trustLevel || '').trim()
+  const config = trustConfig[cleanTrustLevel] || trustConfig['Suspicious']
+  const Icon = config?.icon || ShieldCheck
 
   useEffect(() => {
     let start = 0
-    const end = scamProbability
+    const end = typeof scamProbability === 'number' ? scamProbability : 0
     const duration = 1200
     const startTime = Date.now()
 

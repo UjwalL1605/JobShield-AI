@@ -16,8 +16,9 @@ function GeminiSearchCard({ geminiAnalysis }) {
     model_used,
   } = geminiAnalysis
 
-  const isHighRisk = scam_score >= 60
-  const isSafe = scam_score < 30
+  const score = typeof scam_score === 'number' ? scam_score : 50
+  const isHighRisk = score >= 60
+  const isSafe = score < 30
 
   return (
     <div className="gemini-card glass animate-fade-in-up">
@@ -35,15 +36,15 @@ function GeminiSearchCard({ geminiAnalysis }) {
         <div className="gemini-verdict-badge">
           {isHighRisk ? (
             <span className="badge badge-very-high-risk">
-              <ShieldAlert size={14} /> {trust_level || 'Scam Detected'} ({Math.round(scam_score)}%)
+              <ShieldAlert size={14} /> {trust_level || 'Scam Detected'} ({Math.round(score)}%)
             </span>
           ) : isSafe ? (
             <span className="badge badge-safe">
-              <ShieldCheck size={14} /> {trust_level || 'Likely Legitimate'} ({Math.round(scam_score)}%)
+              <ShieldCheck size={14} /> {trust_level || 'Likely Legitimate'} ({Math.round(score)}%)
             </span>
           ) : (
             <span className="badge badge-suspicious">
-              <AlertTriangle size={14} /> {trust_level || 'Suspicious'} ({Math.round(scam_score)}%)
+              <AlertTriangle size={14} /> {trust_level || 'Suspicious'} ({Math.round(score)}%)
             </span>
           )}
         </div>

@@ -408,7 +408,9 @@ function AnalyzePage() {
                             {feat.direction}
                           </span>
                           <span className="ml-feature-score">
-                            {feat.contribution > 0 ? '+' : ''}{feat.contribution.toFixed(3)}
+                            {typeof feat.contribution === 'number'
+                              ? `${feat.contribution > 0 ? '+' : ''}${feat.contribution.toFixed(3)}`
+                              : (feat.contribution || '')}
                           </span>
                         </div>
                       ))}
