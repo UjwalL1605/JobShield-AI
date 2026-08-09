@@ -8,7 +8,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 
 const client = axios.create({
   baseURL: API_BASE,
-  timeout: 60000, // 60s timeout for OCR requests
+  timeout: 90000, // 90s timeout for cloud cold starts and OCR
   headers: {
     'Content-Type': 'application/json',
   },
