@@ -62,7 +62,7 @@ app.include_router(analyze.router)
 app.include_router(report.router)
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {
         "name": "JobShield AI",
@@ -72,7 +72,7 @@ async def root():
     }
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 async def health_check():
     """Health check endpoint."""
     analyzer = get_analyzer()
