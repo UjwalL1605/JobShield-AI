@@ -3,63 +3,71 @@
 /* ─── CSS Custom Properties (Design Tokens) ─────────────────────────────────── */
 
 :root {
-  /* Primary Palette — Cyber Indigo & Electric Violet */
-  --primary-50: #eef2ff;
-  --primary-100: #e0e7ff;
-  --primary-200: #c7d2fe;
-  --primary-300: #a5b4fc;
-  --primary-400: #818cf8;
-  --primary-500: #6366f1;
-  --primary-600: #4f46e5;
-  --primary-700: #4338ca;
-  --primary-800: #3730a3;
-  --primary-900: #312e81;
+  /* Cyber Emerald & Neon Cyan Primary Palette */
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #10b981;
+  --primary-600: #059669;
+  --primary-700: #047857;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
 
-  /* Accent — Vivid Cyan / Emerald */
+  /* Accent — Neon Green, Cyber Orange, Vivid Cyan */
+  --neon-green: #00e599;
+  --neon-cyan: #00f0ff;
+  --neon-orange: #ff6b35;
+  --neon-red: #ef4444;
+  --neon-purple: #a855f7;
+
+  /* Accent variables */
   --accent-300: #67e8f9;
   --accent-400: #22d3ee;
   --accent-500: #06b6d4;
   --accent-600: #0891b2;
-  --accent-emerald: #10b981;
+  --accent-emerald: #00e599;
 
   /* Risk Colors (Dark Mode Defaults) */
-  --safe: #10b981;
-  --safe-bg: rgba(16, 185, 129, 0.15);
+  --safe: #00e599;
+  --safe-bg: rgba(0, 229, 153, 0.12);
   --likely-safe: #34d399;
-  --likely-safe-bg: rgba(52, 211, 153, 0.15);
+  --likely-safe-bg: rgba(52, 211, 153, 0.12);
   --suspicious: #f59e0b;
-  --suspicious-bg: rgba(245, 158, 11, 0.15);
-  --high-risk: #f97316;
-  --high-risk-bg: rgba(249, 115, 22, 0.15);
+  --suspicious-bg: rgba(245, 158, 11, 0.12);
+  --high-risk: #ff6b35;
+  --high-risk-bg: rgba(255, 107, 53, 0.15);
   --very-high-risk: #ef4444;
   --very-high-risk-bg: rgba(239, 68, 68, 0.18);
 
-  /* Dark Surfaces */
-  --bg-primary: #070913;
-  --bg-secondary: #0d1124;
-  --bg-tertiary: #131936;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --surface-active: rgba(255, 255, 255, 0.12);
-  --border: rgba(255, 255, 255, 0.09);
-  --border-hover: rgba(255, 255, 255, 0.18);
+  /* Dark Surfaces — Deep Cyber Grid */
+  --bg-primary: #080c14;
+  --bg-secondary: #0d121f;
+  --bg-tertiary: #131b2e;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --surface-active: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(0, 229, 153, 0.35);
+  --border-glow: rgba(0, 229, 153, 0.25);
 
   /* Text */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
-  --text-inverse: #070913;
+  --text-inverse: #080c14;
 
   /* Glass Dark */
-  --glass-bg: rgba(13, 17, 36, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(13, 18, 31, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
 
   /* Spacing & Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -73,48 +81,67 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ─── Light Mode Theme Palette (Apple / Linear Luxury Aesthetic) ───────────── */
+/* ─── Light Mode Theme Palette (Linear / Apple Luxury Aesthetic) ───────────── */
 
 [data-theme="light"] {
-  /* Clean porcelain surfaces */
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
   --bg-tertiary: #e2e8f0;
   --surface: #ffffff;
   --surface-hover: #f1f5f9;
   --surface-active: #e2e8f0;
-  --border: rgba(99, 102, 241, 0.12);
-  --border-hover: rgba(99, 102, 241, 0.25);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-hover: rgba(5, 150, 105, 0.45);
+  --border-glow: rgba(5, 150, 105, 0.25);
 
-  /* Crisp high-contrast text */
+  /* Deep high-contrast slate text */
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-tertiary: #64748b;
   --text-inverse: #ffffff;
 
   /* Frosted porcelain glass */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(99, 102, 241, 0.12);
-  --glass-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(99, 102, 241, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(15, 23, 42, 0.12);
+  --glass-shadow: 0 14px 36px -10px rgba(15, 23, 42, 0.09), 0 2px 8px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.05);
 
-  /* Risk Backgrounds with high readability */
   --safe: #059669;
-  --safe-bg: rgba(16, 185, 129, 0.14);
+  --safe-bg: rgba(16, 185, 129, 0.16);
   --likely-safe: #10b981;
-  --likely-safe-bg: rgba(52, 211, 153, 0.14);
+  --likely-safe-bg: rgba(52, 211, 153, 0.16);
   --suspicious: #d97706;
-  --suspicious-bg: rgba(245, 158, 11, 0.14);
+  --suspicious-bg: rgba(245, 158, 11, 0.16);
   --high-risk: #ea580c;
-  --high-risk-bg: rgba(249, 115, 22, 0.14);
+  --high-risk-bg: rgba(249, 115, 22, 0.16);
   --very-high-risk: #dc2626;
-  --very-high-risk-bg: rgba(239, 68, 68, 0.14);
+  --very-high-risk-bg: rgba(239, 68, 68, 0.16);
 }
 
-[data-theme="light"] body::before {
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(168, 85, 247, 0.05) 0%, transparent 60%);
+[data-theme="light"] .text-gradient {
+  background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .text-gradient-orange {
+  background: linear-gradient(135deg, #ea580c 0%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .btn-primary {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px -2px rgba(5, 150, 105, 0.45);
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+[data-theme="light"] .btn-primary:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 6px 24px rgba(5, 150, 105, 0.55);
+  color: #ffffff;
 }
 
 /* ─── Global Reset ───────────────────────────────────────────────────────────── */
@@ -139,9 +166,10 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
 }
 
-/* Background gradient */
+/* Cyber Grid Background Overlay */
 body::before {
   content: '';
   position: fixed;
@@ -149,12 +177,37 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 60% at 50% 90%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, black 40%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, black 40%, transparent 85%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Vignette Top/Corner Glow */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 500px;
+  background: radial-gradient(circle at 50% -10%, rgba(0, 229, 153, 0.12) 0%, rgba(0, 240, 255, 0.05) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::before {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+}
+
+[data-theme="light"] body::after {
+  background: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.05) 45%, transparent 70%);
 }
 
 #root {
@@ -223,21 +276,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-  color: white;
-  box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, #00e599 0%, #059669 100%);
+  color: #080c14;
+  font-weight: 700;
+  box-shadow: 0 4px 20px -2px rgba(0, 229, 153, 0.45), 0 0 15px rgba(0, 229, 153, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-400) 0%, var(--primary-500) 100%);
-  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.55);
+  background: linear-gradient(135deg, #22f7b0 0%, #10b981 100%);
+  box-shadow: 0 6px 28px rgba(0, 229, 153, 0.65), 0 0 25px rgba(0, 229, 153, 0.35);
   transform: translateY(-2px);
+  color: #04100c;
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 229, 153, 0.35);
 }
 
 .btn-secondary {
@@ -566,10 +621,33 @@ select.input-field option {
 /* ─── Utility ────────────────────────────────────────────────────────────────── */
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+  background: linear-gradient(135deg, #00e599 0%, #00f0ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.text-gradient-orange {
+  background: linear-gradient(135deg, #ff6b35 0%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00e599;
+  box-shadow: 0 0 10px #00e599;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(0, 229, 153, 0.7); }
+  70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 8px rgba(0, 229, 153, 0); }
+  100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(0, 229, 153, 0); }
 }
 
 .text-center { text-align: center; }

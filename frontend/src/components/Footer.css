@@ -5,6 +5,11 @@
   margin-top: auto;
 }
 
+[data-theme="light"] .footer {
+  background: rgba(241, 245, 249, 0.95);
+}
+
+
 .footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
@@ -38,9 +43,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
-  border-radius: 6px;
-  color: white;
+  background: linear-gradient(135deg, rgba(0, 229, 153, 0.2), rgba(0, 240, 255, 0.1));
+  border: 1px solid rgba(0, 229, 153, 0.4);
+  border-radius: var(--radius-sm);
+  color: #00e599;
 }
 
 .footer-desc {

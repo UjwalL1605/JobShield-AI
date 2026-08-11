@@ -6,9 +6,8 @@ Each sample is tagged with a template_id so train/test can be split
 by template (prevents the model from just memorizing template shape).
 
 v3 adds legitimate freelance/gig-payment templates (client pays freelancer)
-and formal/bureaucratic legit phrasing (PPO calls, rejections, verification
-reminders, govt notices) to counterbalance false positives surfaced by a
-blind holdout evaluation (evaluate_blind.py).
+to counterbalance false positives on real freelance payment language, which
+was surfaced by a blind holdout evaluation.
 """
 
 import pandas as pd
@@ -57,20 +56,9 @@ SCAM_TEMPLATES = [
     "Dear Candidate, We are delighted to extend an offer for the {role} position at {company}. Kindly revert with your bank account details for payroll setup within 24 hours to avoid delay in onboarding.",
     "Hi, HR at {company} here. Great news, you're through to the final stage! Just need your date of birth, address and bank IFSC code to prepare your employment contract.",
     "{company} Talent Team: Your resume matched our open role perfectly, no interview needed. Reply with your Aadhaar number so we can generate your employee ID before joining.",
-    # ── Casual/conversational scam phrasing — no scaffolding artifacts ──
-    "hey are you still looking for work? my cousin got placed at {company} last month, they're hiring again. just message {phone} and they'll walk you through registration, small deposit needed but you get it back",
-    "{name} here, freelance recruiter for {company}. got a lead for you - fully remote, {salary} a month easy. only catch is a laptop verification charge of ₹{fee}. lmk if interested",
-    "hii sir/madam we from {company} plzz send ur bank details n aadhar for job process, salary {salary} confirm, no tension",
-    "URGENT JOB ALERT 🔔 {company} recruiting for multiple roles pan india. WFH available. freshers welcome. registration link in bio, small fee applies. hurry limited period",
-    "Hey! Saw you're job hunting. {company} has an opening, HR is my friend. She said just fill this form and pay the verification amount ₹{fee}, she'll fast-track your application",
-    "*Forwarded* {company} is conducting a hiring drive this week. Genuine WFH opportunity. Interested candidates DM {handle} on Instagram. Small registration amount required to lock your slot",
-    "This is {name}, placement coordinator. Your resume has been shortlisted for {company}. Kindly complete the joining formalities by sharing your account number for the advance stipend transfer of ₹{salary}",
-    "So excited to tell you - {company} said yes! They just need me to pay ₹{fee} for the 'training kit' before I start Monday. Has anyone else done this before, is this normal??",
-    "Bro {company} is hiring, my friend joined last week, easy money {salary}/month, just DM {handle} they'll explain everything, no interview needed only basic details",
-    "Received this today: '{company} welcomes you aboard! Complete your KYC via the link and deposit ₹{fee} refundable caution money to activate your ID card.'",
     # ── Soft-fee freelance scams: candidate pays company for freelance "access" ──
-    "Hi, to finalize your freelance {project_type} project with us, please pay a ₹{fee} onboarding fee to access the client dashboard and start receiving tasks.",
-    "Freelance opportunity confirmed for {project_type}! Just deposit ₹{fee} as a refundable trust fee before we release your first project brief.",
+    "Hi, to finalize your freelance project with us, please pay a ₹{fee} onboarding fee to access the client dashboard and start receiving tasks.",
+    "Freelance opportunity confirmed! Just deposit ₹{fee} as a refundable trust fee before we release your first project brief.",
 ]
 
 # ─── Legitimate Job Templates ──────────────────────────────────────────────────
@@ -105,17 +93,6 @@ LEGIT_TEMPLATES = [
     "As part of our onboarding process, {company} requires a refundable security deposit of ₹{cert_fee} for company laptop issuance, returned upon completion of probation. Full details in your official offer letter.",
     "Reminder: your {company} interview is scheduled for {date} at {time}. Please carry your original documents. This is a formal in-person process, no online payment is required at any stage.",
     "{company} is closing applications for the {role} internship in 2 days. Don't miss out, apply now at {website}. Selection purely on merit, no payment involved.",
-    # ── Casual/conversational legit phrasing — no scaffolding artifacts ──
-    "hey, we're looking for a {role} on my team at {company}, mostly {skill} work. pay's decent and the team's great. shoot me your resume if you're interested, no rush",
-    "Placement Cell Notice: {company} will conduct a pre-placement talk this {date} followed by an online assessment. Eligibility {ctc}+ CGPA equivalent, no active backlogs.",
-    "I'm looking for 2 interns for a {months}-month research assistantship in my lab at {college}. Unpaid, but you'll get a co-authorship credit and a letter of recommendation. Email your CV if interested.",
-    "Our {role} team is short-staffed and we need someone who can start soon. Contract-to-hire, ₹{stipend}/month, fully remote, daily standup. Reply here if you'd like a call.",
-    "Congrats on making it to the final interview round for the {role} position at {company}! Just a heads up, this round is with our VP directly, so dress professionally.",
-    "Hi, thanks for applying to {company}. Wanted to give you a quick update - we're still reviewing applications, should hear back within two weeks either way.",
-    "{company} referral program: if you know someone great for the {role} role, send them my way. No fees involved, just good karma and maybe a coffee on me.",
-    "Quick note from HR at {company} - your background verification came back clean, offer letter incoming this week. Excited to have you on the {role} team.",
-    "We're a {industry} startup building {product}, looking for a {role} to join us early. Equity + salary, {years}+ years experience preferred. Email {corporate_email} if curious.",
-    "{college} Career Services: {company} has posted a new {role} opening on the placement portal. Deadline to apply is {date}. Check your student login for details.",
     # ── Freelance/gig payment direction: client pays freelancer (legit) ──
     "Hi, thanks for taking up the {project_type} project! Payment will be ₹{gig_amount}, 50% upfront via UPI once we sign off on the brief, remaining on delivery. Let me know your UPI ID to send the advance.",
     "Freelance opportunity: {project_type} for a 2-week sprint. Budget ₹{gig_amount} fixed, paid via bank transfer in two milestones. DM your portfolio if interested.",
@@ -125,12 +102,6 @@ LEGIT_TEMPLATES = [
     "Client here from {platform} - confirming the {project_type} job at ₹{gig_amount}, milestone-based payment through the platform's escrow, first milestone released on approval.",
     "Thanks for the quote! Let's proceed with ₹{gig_amount} for the {project_type} work, I'll send 30% advance via UPI today and rest on completion as agreed.",
     "We're hiring a freelance content writer, ₹{gig_amount} per article, payments processed weekly via bank transfer, no fees or deposits required from your side.",
-    "Need a part time graphic designer, ₹{gig_amount}/month retainer, invoice us monthly, first payment released after your first deliverable is approved.",
-    # ── Formal/bureaucratic legit phrasing (PPO, rejection, verification, govt) ──
-    "Reminder: your pre-placement offer (PPO) confirmation call with {company} is scheduled for {time}. Please join via the link sent to your registered email.",
-    "Following up on your application to {company} - unfortunately this role has been put on hold internally due to budget changes. We'll reach out if it reopens. No action needed from you.",
-    "Reminder: complete your pre-employment verification form by {date}, this is standard for all new joiners at {company} and does not involve any payment, just document uploads on our internal portal.",
-    "{company} Recruitment Board Notice: exam admit cards have been released. Download only via the official recruitment website using your registration number. No other website or app is authorized.",
 ]
 
 # ─── Fill Values ─────────────────────────────────────────────────────────────────
@@ -152,7 +123,6 @@ LEGIT_COMPANIES = [
     "Adobe", "Salesforce", "SAP Labs", "ThoughtWorks", "Freshworks",
     "Zoho Corporation", "Razorpay", "PhonePe", "CRED", "Atlassian",
     "Goldman Sachs", "Morgan Stanley", "JP Morgan", "Deutsche Bank",
-    "HDFC Bank", "ICICI Bank",
 ]
 
 ROLES = [
@@ -273,7 +243,6 @@ def _fill_scam_template(template):
         name=random.choice(["Rahul", "Priya", "Amit", "Sneha", "Ravi", "Anjali"]),
         handle=random.choice(HANDLES),
         role=random.choice(ROLES),
-        project_type=random.choice(PROJECT_TYPES),
     )
 
 def _fill_legit_template(template):
@@ -315,7 +284,7 @@ def _fill_legit_template(template):
     )
 
 def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
-    """Generate a balanced synthetic dataset with strictly unique texts, tagged with template_id for grouped splitting."""
+    """Generate a balanced synthetic dataset, tagged with template_id for grouped splitting."""
 
     if output_path is None:
         output_path = os.path.join(os.path.dirname(__file__), "data", "training_data.csv")
@@ -323,42 +292,24 @@ def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     data = []
-    seen_texts = set()
 
-    # Generate unique scam samples
-    attempts = 0
-    max_attempts = num_scam * 15
-    while len(data) < num_scam and attempts < max_attempts:
-        attempts += 1
+    for _ in range(num_scam):
         idx = random.randrange(len(SCAM_TEMPLATES))
-        text = _fill_scam_template(SCAM_TEMPLATES[idx]).strip()
-        norm_key = " ".join(text.lower().split())
-        if norm_key not in seen_texts and len(text) > 10:
-            seen_texts.add(norm_key)
-            data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
+        text = _fill_scam_template(SCAM_TEMPLATES[idx])
+        data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
 
-    scam_count = len(data)
-
-    # Generate unique legit samples
-    attempts = 0
-    max_attempts = num_legit * 15
-    while (len(data) - scam_count) < num_legit and attempts < max_attempts:
-        attempts += 1
+    for _ in range(num_legit):
         idx = random.randrange(len(LEGIT_TEMPLATES))
         try:
-            text = _fill_legit_template(LEGIT_TEMPLATES[idx]).strip()
+            text = _fill_legit_template(LEGIT_TEMPLATES[idx])
         except (KeyError, IndexError):
             continue
-        norm_key = " ".join(text.lower().split())
-        if norm_key not in seen_texts and len(text) > 10:
-            seen_texts.add(norm_key)
-            data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
+        data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
 
     random.shuffle(data)
     df = pd.DataFrame(data)
-    df = df.drop_duplicates(subset=["text"]).reset_index(drop=True)
     df.to_csv(output_path, index=False)
-    print(f"✅ Generated {len(df)} unique samples ({(df['label'] == 1).sum()} scam, {(df['label'] == 0).sum()} legit, 0 duplicates)")
+    print(f"✅ Generated {len(df)} samples ({num_scam} scam, {len(df) - num_scam} legit)")
     print(f"   {len(SCAM_TEMPLATES)} scam templates, {len(LEGIT_TEMPLATES)} legit templates")
     print(f"   Saved to: {output_path}")
     return df

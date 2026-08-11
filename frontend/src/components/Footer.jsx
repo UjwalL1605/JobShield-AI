@@ -10,13 +10,13 @@ function Footer() {
           <div className="footer-brand">
             <Link to="/" className="footer-logo">
               <div className="footer-logo-icon">
-                <Shield size={20} />
+                <Shield size={18} />
               </div>
               <span>Job<span className="text-gradient">Shield</span> AI</span>
             </Link>
             <p className="footer-desc">
-              AI-powered protection against fake job and internship scams.
-              Stay safe, stay informed.
+              Next-generation AI defense against fraudulent job offers, advance fee schemes, and recruitment scams.
+              Never assume safety by default.
             </p>
           </div>
 

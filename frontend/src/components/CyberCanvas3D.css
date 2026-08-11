@@ -1,0 +1,15 @@
+.cyber-canvas-3d {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+  transition: opacity var(--transition-slow);
+}
+
+[data-theme="light"] .cyber-canvas-3d {
+  opacity: 0.55;
+}

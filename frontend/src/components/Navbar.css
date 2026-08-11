@@ -17,6 +17,11 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
+[data-theme="light"] .navbar-scrolled {
+  background: rgba(248, 250, 252, 0.88);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
 .navbar-inner {
   display: flex;
   align-items: center;
@@ -42,15 +47,61 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(0, 229, 153, 0.2), rgba(0, 240, 255, 0.1));
+  border: 1px solid rgba(0, 229, 153, 0.4);
   border-radius: var(--radius-sm);
-  color: white;
+  color: #00e599;
+  box-shadow: 0 0 12px rgba(0, 229, 153, 0.25);
+}
+
+[data-theme="light"] .navbar-logo {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(5, 150, 105, 0.35);
+  color: #047857;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15);
 }
 
 .navbar-title {
   letter-spacing: -0.02em;
+  font-family: var(--font-display);
+}
+
+.navbar-version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-right: 8px;
+}
+
+[data-theme="light"] .navbar-version-badge {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #475569;
+}
+
+.navbar-version-badge code {
+  font-family: var(--font-mono);
+}
+
+.version-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00e599;
+  box-shadow: 0 0 6px #00e599;
+}
+
+[data-theme="light"] .version-dot {
+  background: #059669;
+  box-shadow: 0 0 6px #059669;
 }
 
 .navbar-links {
@@ -69,14 +120,29 @@
   text-decoration: none;
 }
 
+[data-theme="light"] .navbar-link {
+  color: #334155;
+}
+
 .navbar-link:hover {
   color: var(--text-primary);
   background: var(--surface);
 }
 
+[data-theme="light"] .navbar-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 .navbar-link.active {
-  color: var(--primary-400);
-  background: rgba(99, 102, 241, 0.1);
+  color: #00e599;
+  background: rgba(0, 229, 153, 0.1);
+}
+
+[data-theme="light"] .navbar-link.active {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.12);
+  font-weight: 700;
 }
 
 .navbar-cta {
@@ -152,6 +218,10 @@
     pointer-events: none;
     transition: all var(--transition-base);
     border-bottom: 1px solid var(--border);
+  }
+
+  [data-theme="light"] .navbar-links {
+    background: rgba(248, 250, 252, 0.95);
   }
 
   .navbar-links-open {

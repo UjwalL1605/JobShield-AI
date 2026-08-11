@@ -1,82 +1,119 @@
+/* ─── Result Card & Speedometer Gauge ───────────────────────────────────────── */
+
 .result-card {
-  padding: 32px;
+  padding: 28px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-xl);
 }
 
 .result-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+}
+
+.result-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .result-card-title {
   font-size: 1.15rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   margin: 0;
 }
 
-.result-gauge-container {
+.speedometer-zone-tag {
+  font-size: 0.725rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* ─── Speedometer SVG & Needle ─────────────────────────────────────────────── */
+
+.speedometer-container {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 12px 0 24px;
+  margin: 10px 0 20px;
 }
 
-.result-gauge {
-  width: 170px;
-  height: 170px;
+.speedometer-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  overflow: visible;
 }
 
-.result-gauge-progress {
-  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 8px currentColor);
+.speedometer-progress-arc {
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.result-gauge-value {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
+.speedo-tick-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.speedometer-needle-group {
+  transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: 0 0;
+}
+
+/* Digital Readout below needle hub */
+.speedometer-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -12px;
+}
+
+.speedometer-score-row {
   display: flex;
   align-items: baseline;
   gap: 2px;
 }
 
-.result-score {
-  font-size: 3rem;
+.speedometer-score-val {
+  font-size: 2.8rem;
   font-weight: 900;
   line-height: 1;
   font-family: var(--font-display);
 }
 
-.result-percent {
-  font-size: 1.35rem;
+.speedometer-percent-symbol {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-secondary);
 }
 
-.result-gauge-label {
-  margin-top: 10px;
-  font-size: 0.8125rem;
+.speedometer-score-caption {
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  margin-top: 4px;
 }
+
+/* ─── Recommendation Detail ────────────────────────────────────────────────── */
 
 .result-detail {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-radius: var(--radius-md);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.5;
   text-align: left;
@@ -84,5 +121,5 @@
 }
 
 [data-theme="light"] .result-detail {
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
 }

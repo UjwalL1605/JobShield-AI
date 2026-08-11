@@ -40,6 +40,11 @@ function Navbar() {
         </Link>
 
         <div className={`navbar-links ${isOpen ? 'navbar-links-open' : ''}`}>
+          <div className="navbar-version-badge">
+            <span className="version-dot"></span>
+            <code>v1.0 — AI Threat Detection</code>
+          </div>
+
           {navLinks.map((link) => (
             <Link
               key={link.to}

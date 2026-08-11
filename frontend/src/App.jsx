@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import ErrorBoundary from './components/ErrorBoundary'
+import CyberCanvas3D from './components/CyberCanvas3D'
+import ScrollToTop from './components/ScrollToTop'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
@@ -12,7 +14,9 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+        <CyberCanvas3D />
         <Router>
+          <ScrollToTop />
           <Navbar />
           <main className="page">
             <Routes>

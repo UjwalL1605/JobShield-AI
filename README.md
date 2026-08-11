@@ -1,6 +1,6 @@
 # JobShield AI 🛡️
 
-[![Live Frontend](https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://job-shield-ai.vercel.app)
+[![Live Frontend](https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://job-shield-ai-kappa.vercel.app)
 [![Live Backend](https://img.shields.io/badge/Live_API-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://jobshield-ai-4oev.onrender.com)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
@@ -15,9 +15,10 @@
 ---
 
 ## 🌐 Live Production Links
-- 🚀 **Live Web Application**: [https://job-shield-ai.vercel.app](https://job-shield-ai.vercel.app)
+- 🚀 **Live Web Application**: [https://job-shield-ai-kappa.vercel.app](https://job-shield-ai-kappa.vercel.app)
 - ⚙️ **Live Backend API**: [https://jobshield-ai-4oev.onrender.com](https://jobshield-ai-4oev.onrender.com)
 - 📖 **Interactive Swagger Docs**: [https://jobshield-ai-4oev.onrender.com/docs](https://jobshield-ai-4oev.onrender.com/docs)
+
 
 ---
 
@@ -25,7 +26,7 @@
 
 Employment scams targeting students, fresh graduates, and career switchers are at an all-time high. Fraudsters exploit job seekers through advance-fee schemes ("registration / training fees", "refundable security deposits"), company impersonation, unrealistic salary promises, task-based investment scams, and unsolicited WhatsApp / Telegram recruitment.
 
-**JobShield AI** is an intelligent defense platform that analyzes job offers, interview invites, and chat screenshots to evaluate scam risks in seconds. It combines **Machine Learning with Domain Feature Engineering (NLP)**, an **Extensive Heuristic Rule Engine**, **Optical Character Recognition (OCR)**, and a **Live Threat Intelligence Registry** to deliver accurate risk scores and actionable explanations.
+**JobShield AI** is an intelligent defense platform that analyzes job offers, interview invites, and chat screenshots to evaluate scam risks in seconds. It combines **Machine Learning with Domain Feature Engineering (NLP)**, an **Extensive Heuristic Rule Engine**, **Optical Character Recognition (OCR)**, **Google Gemini 2.5 Flash with live Search Grounding**, and a **Live Threat Intelligence Registry** to deliver accurate risk scores and actionable explanations.
 
 ---
 
@@ -103,10 +104,12 @@ graph TD
         E --> H[Corporate Email Checker]
         E --> I[Salary Benchmark Checker]
         E --> J[SQLite Threat Intelligence DB]
+        E --> K[Web Intelligence & Brand Impersonation]
+        E --> L[Google Gemini AI Deep Search]
     end
     
-    F & G & H & I & J --> K[Composite Scam Probability & XAI Features]
-    K --> L[React Dashboard UI]
+    F & G & H & I & J & K & L --> M[Composite Scam Probability & XAI Features]
+    M --> N[React Dashboard UI]
 ```
 
 ### Risk Classification System
@@ -126,52 +129,98 @@ graph TD
 ```
 JobShield-AI/
 ├── backend/
-│   ├── main.py                     # FastAPI application entry point & CORS configuration
-│   ├── requirements.txt            # Python dependencies
+│   ├── main.py                           # FastAPI application entry point & CORS configuration
+│   ├── requirements.txt                  # Python dependencies
+│   ├── runtime.txt                       # Python runtime version for deployment
+│   ├── Procfile                          # Render deployment entry point
+│   ├── .env.example                      # Environment variable template (Gemini API key)
 │   ├── database/
-│   │   ├── db.py                   # SQLite database management (WAL mode)
-│   │   └── scam_reports.db         # Scam reports database
+│   │   ├── __init__.py
+│   │   ├── db.py                         # SQLite database management (WAL mode)
+│   │   ├── scam_reports.db               # Scam reports database (pre-seeded)
+│   │   └── seed_threat_db.py             # Threat database seeder from Indian Job Scam Dataset
 │   ├── ml/
-│   │   ├── consolidate_dataset.py  # Dataset merger & deduplication pipeline
-│   │   ├── dataset_generator.py    # Synthetic dataset generator (uniqueness-enforced)
-│   │   ├── train_model.py          # FeatureUnion + Logistic Regression training
-│   │   ├── evaluate_real.py        # Real-world holdout evaluation script
-│   │   ├── evaluate_blind.py       # Blind holdout evaluation script
-│   │   ├── evaluate_combined.py    # End-to-end full pipeline evaluation script
-│   │   ├── feature_extractor.py    # ML feature extractor adapter
-│   │   ├── data/                   # Consolidated training data & source datasets
-│   │   └── models/                 # Serialized production artifacts (Pipeline & Model)
+│   │   ├── __init__.py
+│   │   ├── consolidate_dataset.py        # Dataset merger & deduplication pipeline
+│   │   ├── dataset_generator.py          # Synthetic dataset generator (uniqueness-enforced)
+│   │   ├── merge_external_dataset.py     # External dataset merging utility
+│   │   ├── train_model.py                # FeatureUnion + Logistic Regression training
+│   │   ├── evaluate_real.py              # Real-world holdout evaluation script
+│   │   ├── evaluate_blind.py             # Blind holdout evaluation script
+│   │   ├── evaluate_combined.py          # End-to-end full pipeline evaluation script
+│   │   ├── feature_extractor.py          # ML feature extractor adapter
+│   │   ├── data/                         # Consolidated training data & source datasets
+│   │   │   ├── training_data.csv         # Consolidated deduplicated training set
+│   │   │   ├── Indian Job Scam Dataset.csv
+│   │   │   └── synthetic_indian_jobs.csv
+│   │   ├── models/                       # Serialized production artifacts
+│   │   │   ├── scam_classifier.pkl       # Trained Logistic Regression classifier
+│   │   │   └── tfidf_vectorizer.pkl      # Fitted TF-IDF vectorizer pipeline
+│   │   └── debug/                        # Debug & test scripts
+│   │       ├── debug_bank_case.py
+│   │       └── debug_rule_case.py
 │   ├── routers/
-│   │   ├── analyze.py              # Endpoints for text & screenshot analysis
-│   │   └── report.py               # Endpoints for scam reporting & threat lookups
+│   │   ├── __init__.py
+│   │   ├── analyze.py                    # Endpoints for text & screenshot analysis
+│   │   └── report.py                     # Endpoints for scam reporting & threat lookups
 │   └── services/
-│       ├── feature_extractor.py    # ScamDomainFeatureExtractor (domain signals)
-│       ├── nlp_analyzer.py         # NLP analyzer with XAI feature contributions
-│       ├── rule_engine.py          # Heuristic pattern matching & negation scoring
-│       ├── email_checker.py        # Email authenticity & domain verification
-│       ├── salary_checker.py       # Salary benchmark & anomaly extraction
-│       └── ocr_service.py          # EasyOCR pipeline with image preprocessing
+│       ├── __init__.py
+│       ├── feature_extractor.py          # ScamDomainFeatureExtractor (domain signals)
+│       ├── nlp_analyzer.py               # NLP analyzer with XAI feature contributions
+│       ├── rule_engine.py                # Heuristic pattern matching & negation scoring
+│       ├── email_checker.py              # Email authenticity & domain verification
+│       ├── salary_checker.py             # Salary benchmark & anomaly extraction
+│       ├── ocr_service.py                # EasyOCR pipeline with image preprocessing
+│       ├── web_verifier.py               # Web intelligence & brand impersonation detector
+│       └── gemini_search_analyzer.py     # Google Gemini AI Deep Search with Search Grounding
 │
-└── frontend/
-    ├── package.json                # Frontend dependencies & npm scripts
-    ├── index.html                  # Main HTML template
-    ├── vite.config.ts              # Vite build config
-    └── src/
-        ├── App.jsx                 # Main router & app layout
-        ├── api/
-        │   └── client.js           # Axios API client wrapper
-        ├── pages/
-        │   ├── HomePage.jsx        # Landing page with live statistics
-        │   ├── AnalyzePage.jsx     # Interactive text & OCR scanner
-        │   ├── ReportPage.jsx      # Scam database lookup & report submission
-        │   └── AboutPage.jsx       # Educational scam guide & red flags
-        └── components/
-            ├── Navbar.jsx          # Global header navigation
-            ├── Footer.jsx          # Global footer
-            ├── FileUpload.jsx      # Drag-and-drop screenshot uploader
-            ├── ResultCard.jsx      # Risk gauge & verdict summary
-            ├── RiskFactorTable.jsx # Itemized risk breakdown
-            └── HighlightedText.jsx # Visual text highlighter for scam phrases
+├── frontend/
+│   ├── package.json                      # Frontend dependencies & npm scripts
+│   ├── index.html                        # Main HTML template with SEO meta tags
+│   ├── vercel.json                       # Vercel SPA rewrite rules
+│   ├── tsconfig.json                     # TypeScript configuration
+│   ├── public/
+│   │   ├── favicon.svg                   # Custom shield favicon
+│   │   └── icons.svg                     # App icon set
+│   └── src/
+│       ├── App.jsx                       # Main router & app layout
+│       ├── main.jsx                      # React DOM entry point
+│       ├── index.css                     # Global design system (tokens, glass, buttons)
+│       ├── api/
+│       │   └── client.js                 # Axios API client wrapper
+│       ├── context/
+│       │   └── ThemeContext.jsx           # Dark/Light mode theme provider & persistence
+│       ├── pages/
+│       │   ├── HomePage.jsx              # Landing page with features & threat radar
+│       │   ├── HomePage.css
+│       │   ├── AnalyzePage.jsx           # Interactive text & OCR scanner
+│       │   ├── AnalyzePage.css
+│       │   ├── ReportPage.jsx            # Scam database lookup & report submission
+│       │   ├── ReportPage.css
+│       │   ├── AboutPage.jsx             # Educational scam guide & red flags
+│       │   └── AboutPage.css
+│       └── components/
+│           ├── Navbar.jsx                # Global header navigation with theme toggle
+│           ├── Navbar.css
+│           ├── Footer.jsx                # Global footer
+│           ├── Footer.css
+│           ├── ErrorBoundary.jsx          # React error boundary wrapper
+│           ├── FileUpload.jsx            # Drag-and-drop screenshot uploader
+│           ├── FileUpload.css
+│           ├── ResultCard.jsx            # Risk gauge & verdict summary
+│           ├── ResultCard.css
+│           ├── RiskFactorTable.jsx       # Itemized risk breakdown
+│           ├── RiskFactorTable.css
+│           ├── HighlightedText.jsx       # Visual text highlighter for scam phrases
+│           ├── HighlightedText.css
+│           ├── WebIntelligenceCard.jsx   # Web & entity intelligence display
+│           ├── WebIntelligenceCard.css
+│           ├── GeminiSearchCard.jsx      # Google AI Deep Search results card
+│           └── GeminiSearchCard.css
+│
+├── package.json                          # Root package.json
+├── runtime.txt                           # Runtime version
+└── .gitignore
 ```
 
 ---
@@ -208,6 +257,10 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# (Optional) Set up Gemini API key for live AI search
+cp .env.example .env
+# Edit .env and add your Gemini API key from https://aistudio.google.com/app/apikey
+
 # (Optional) Consolidate dataset & retrain ML model
 python ml/consolidate_dataset.py
 python ml/train_model.py
@@ -216,6 +269,9 @@ python ml/train_model.py
 python ml/evaluate_real.py
 python ml/evaluate_blind.py
 python ml/evaluate_combined.py
+
+# (Optional) Seed threat intelligence database
+python database/seed_threat_db.py
 
 # Start FastAPI server
 python main.py
