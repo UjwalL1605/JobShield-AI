@@ -54,7 +54,8 @@
 }
 
 .speedometer-progress-arc {
-  transition: stroke-dashoffset 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Driven in real-time by synchronized frame loop */
+  will-change: stroke-dashoffset;
 }
 
 .speedo-tick-text {
@@ -64,8 +65,9 @@
 }
 
 .speedometer-needle-group {
-  transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Driven in real-time by synchronized frame loop */
   transform-origin: 0 0;
+  will-change: transform;
 }
 
 /* Digital Readout below needle hub */

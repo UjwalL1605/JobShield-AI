@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useLocation, Link } from 'react-router-dom'
 import {
   AlertTriangle, Send, Search, Loader2,
-  Mail, Phone, Globe, CreditCard, Building2, Clock
+  Mail, Phone, Globe, CreditCard, Building2, Clock,
+  CheckCircle2, ArrowLeft, ShieldAlert, Sparkles
 } from 'lucide-react'
 import { submitReport, checkIdentifier, getRecentReports } from '../api/client'
 import './ReportPage.css'
@@ -20,6 +22,7 @@ const SOURCE_PLATFORMS = [
 ]
 
 function ReportPage() {
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('report')
 
   // Report form
@@ -30,6 +33,7 @@ function ReportPage() {
   const [sourcePlatform, setSourcePlatform] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState(null)
+  const [prefillNotice, setPrefillNotice] = useState(false)
 
   // Check form
   const [checkQuery, setCheckQuery] = useState('')
@@ -42,7 +46,28 @@ function ReportPage() {
 
   useEffect(() => {
     loadRecentReports()
-  }, [])
+
+    // Handle prefill from AnalyzePage
+    if (location.state) {
+      if (location.state.prefillType) setReportType(location.state.prefillType)
+      if (location.state.prefillIdentifier) setIdentifier(location.state.prefillIdentifier)
+      if (location.state.prefillCompany) setCompanyName(location.state.prefillCompany)
+      if (location.state.prefillDescription) setDescription(location.state.prefillDescription)
+      if (location.state.prefillSource) {
+        const sourceMap = {
+          'whatsapp': 'WhatsApp',
+          'telegram': 'Telegram',
+          'email': 'Email',
+          'linkedin': 'LinkedIn',
+          'sms': 'SMS',
+          'instagram': 'Instagram',
+          'job_posting': 'Job Portal',
+        }
+        setSourcePlatform(sourceMap[location.state.prefillSource] || 'Other')
+      }
+      setPrefillNotice(true)
+    }
+  }, [location.state])
 
   const loadRecentReports = async () => {
     setLoadingRecent(true)
@@ -147,7 +172,21 @@ function ReportPage() {
           <div className="report-form-panel animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             {activeTab === 'report' ? (
               <form className="glass report-form" onSubmit={handleSubmitReport}>
-                <h3 className="form-title">Report a Scam</h3>
+                <div className="report-form-header-row">
+                  <h3 className="form-title">Report a Scam</h3>
+                  <Link to="/analyze" className="btn-link-back">
+                    <ArrowLeft size={14} /> Back to Scanner
+                  </Link>
+                </div>
+
+                {prefillNotice && (
+                  <div className="prefill-alert animate-fade-in">
+                    <Sparkles size={16} className="text-purple flex-shrink-0" />
+                    <div className="prefill-text">
+                      <strong>Auto-filled from your scan audit.</strong> Review the details below and submit to protect the job seeker community.
+                    </div>
+                  </div>
+                )}
 
                 <div className="report-type-grid">
                   {REPORT_TYPES.map((rt) => (

@@ -78,7 +78,8 @@ Return ONLY a valid JSON object matching this exact schema:
     try:
         from google.genai import types
 
-        # Call Gemini with Google Search Grounding & budget=0 for ultra-fast latency
+        # Call Gemini with Google Search Grounding, budget=0 for ultra-fast latency,
+        # and an 8-second timeout so it never causes scanning lag.
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
@@ -86,6 +87,7 @@ Return ONLY a valid JSON object matching this exact schema:
                 tools=[types.Tool(google_search=types.GoogleSearch())],
                 thinking_config=types.ThinkingConfig(thinking_budget=0),
                 temperature=0.1,
+                http_options=types.HttpOptions(timeout=8000),
             ),
         )
 
@@ -138,9 +140,83 @@ Return ONLY a valid JSON object matching this exact schema:
         }
 
     except Exception as e:
-        print(f"[WARN] Gemini Search Analysis failed: {e}")
+        err_str = str(e)
+        if "API_KEY" in err_str.upper() or "INVALID" in err_str.upper() or "PERMISSION" in err_str.upper():
+            print(f"[WARN] Gemini API key is invalid or expired. Update GEMINI_API_KEY in backend/.env")
+        else:
+            print(f"[WARN] Gemini Search Analysis failed: {e}")
         return {
             "available": False,
-            "error": str(e),
+            "error": err_str,
             "message": "AI Web search analysis could not be completed.",
+        }
+
+
+def extract_text_from_image_gemini(image_bytes: bytes, mime_type: str = "image/png") -> Dict:
+    """
+    Extract text from a screenshot using Gemini Vision (multimodal).
+    Falls back gracefully if Gemini is not configured.
+    """
+    client = get_genai_client()
+    if client is None:
+        return {
+            "success": False,
+            "extracted_text": "",
+            "confidence": 0.0,
+            "error": "Gemini Vision not configured.",
+            "engine": "gemini_vision",
+        }
+
+    try:
+        from google.genai import types
+
+        prompt = """Extract ALL visible text from this image exactly as it appears.
+- Preserve paragraph structure with newlines.
+- Include all text: headers, body, signatures, addresses, emails, phone numbers, links.
+- Do NOT summarize or interpret — output raw extracted text only.
+- If no text is visible, output: [NO TEXT FOUND]"""
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                prompt,
+            ],
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                temperature=0.0,
+                http_options=types.HttpOptions(timeout=10000),
+            ),
+        )
+
+        extracted = (response.text or "").strip()
+
+        if not extracted or extracted == "[NO TEXT FOUND]":
+            return {
+                "success": True,
+                "extracted_text": "",
+                "confidence": 0.0,
+                "line_count": 0,
+                "engine": "gemini_vision",
+                "warning": "No text detected in image.",
+            }
+
+        lines = [ln for ln in extracted.splitlines() if ln.strip()]
+        return {
+            "success": True,
+            "extracted_text": extracted,
+            "confidence": 0.97,          # Gemini Vision is highly accurate
+            "line_count": len(lines),
+            "char_count": len(extracted),
+            "engine": "gemini_vision",
+        }
+
+    except Exception as e:
+        print(f"[WARN] Gemini Vision OCR failed: {e}")
+        return {
+            "success": False,
+            "extracted_text": "",
+            "confidence": 0.0,
+            "error": str(e),
+            "engine": "gemini_vision",
         }

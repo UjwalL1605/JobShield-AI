@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting JobShield AI Backend...")
     init_db()
+
     # Pre-load ML model
     try:
         analyzer = get_analyzer()
@@ -33,6 +34,38 @@ async def lifespan(app: FastAPI):
             print("⚠️  ML model not loaded — run 'python ml/train_model.py' first")
     except Exception as e:
         print(f"⚠️  ML model loading failed: {e}")
+
+    # Pre-warm EasyOCR so the first screenshot request is not slow
+    # EasyOCR downloads/loads ~100MB PyTorch model — do it at startup, not on first request
+    try:
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        from services.ocr_service import _get_reader
+
+        def _load_ocr():
+            reader = _get_reader()
+            return reader is not None
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            ocr_ready = await asyncio.get_running_loop().run_in_executor(ex, _load_ocr)
+
+        if ocr_ready:
+            print("✅ EasyOCR model pre-loaded and ready")
+        else:
+            print("⚠️  EasyOCR not available — install with: pip install easyocr")
+    except Exception as e:
+        print(f"⚠️  EasyOCR pre-load failed: {e}")
+
+    # Pre-warm Gemini client (validates API key early)
+    try:
+        from services.gemini_search_analyzer import get_genai_client
+        client = get_genai_client()
+        if client:
+            print("✅ Gemini AI client ready")
+        else:
+            print("⚠️  Gemini AI not configured — add GEMINI_API_KEY to backend/.env")
+    except Exception as e:
+        print(f"⚠️  Gemini client init failed: {e}")
 
     yield
     # Shutdown

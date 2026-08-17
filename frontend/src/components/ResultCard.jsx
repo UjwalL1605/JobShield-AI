@@ -54,23 +54,25 @@ function ResultCard({ scamProbability, trustLevel }) {
   const finalScore = typeof scamProbability === 'number' ? Math.min(100, Math.max(0, scamProbability)) : 0
 
   useEffect(() => {
-    const duration = 1400
-    const startTime = Date.now()
+    let animId
+    const duration = 1000 // Snappy 1-second synchronized animation
+    const startTime = performance.now()
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3)
+      // Ease out quart: 1 - (1 - t)^4
+      const eased = 1 - Math.pow(1 - progress, 4)
       const current = Math.round(eased * finalScore * 10) / 10
       setAnimatedScore(current)
 
       if (progress < 1) {
-        requestAnimationFrame(animate)
+        animId = requestAnimationFrame(animate)
       }
     }
 
-    requestAnimationFrame(animate)
+    animId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animId)
   }, [finalScore])
 
   // Needle angle: -90 degrees (0%) to +90 degrees (100%)

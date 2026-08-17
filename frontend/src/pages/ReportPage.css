@@ -56,8 +56,56 @@
 .form-title {
   font-size: 1.2rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin: 0;
   color: var(--text-primary);
+}
+
+.report-form-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.btn-link-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-link-back:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.prefill-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+  font-size: 0.825rem;
+  line-height: 1.4;
+  color: #d8b4fe;
+}
+
+[data-theme="light"] .prefill-alert {
+  color: #7e22ce;
+  background: #faf5ff;
+  border-color: #d8b4fe;
 }
 
 .form-group {

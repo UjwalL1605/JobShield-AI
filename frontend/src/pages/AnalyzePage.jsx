@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Shield, Send, Loader2, RotateCcw, Clipboard,
   Sparkles, AlertTriangle, CheckCircle2, FileText,
   Camera, Zap, ArrowRight, Building2, HelpCircle,
-  ShieldAlert, Brain
+  ShieldAlert, Brain, Check, Share2, AlertOctagon,
+  Copy, ExternalLink
 } from 'lucide-react'
 import FileUpload from '../components/FileUpload'
 import ResultCard from '../components/ResultCard'
@@ -30,30 +31,53 @@ const SAMPLE_PRESETS = [
   {
     label: '⚡ WhatsApp Task Scam',
     type: 'whatsapp',
+    badge: 'Critical Threat',
     text: 'Hi, I am Priya from Amazon HR. You have been shortlisted for our Remote Product Review & Data Entry role. Work 1-2 hrs daily and earn ₹3,500 to ₹8,000/day. No experience required. To activate your employee portal, pay a refundable registration deposit of ₹499. Contact hiring manager on Telegram: @amazon_hiring_official',
   },
   {
     label: '🏢 Fake Google Offer Letter',
     type: 'email',
+    badge: 'Phishing Trap',
     text: 'Dear Candidate, Google India is pleased to offer you the position of Junior Cloud Support Associate. Monthly CTC is ₹65,000. Review your offer at http://google-careers-portal.site and reply with your Aadhaar, PAN card, and bank account details to google.recruitment.hr@gmail.com within 24 hours.',
   },
   {
     label: '🟢 Genuine TCS Posting',
     type: 'job_posting',
+    badge: 'Legitimate',
     text: 'Tata Consultancy Services (TCS) is hiring React and Node.js Developers for Bengaluru location. 2-4 years experience required. Apply directly through official portal at https://careers.tcs.com. TCS is an equal opportunity employer and never requests any registration fee, caution deposit, or monetary payment at any stage of recruitment.',
   },
 ]
 
 function AnalyzePage() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const resultsRef = useRef(null)
+  const textareaRef = useRef(null)
+
   const [activeTab, setActiveTab] = useState('text')
   const [text, setText] = useState('')
   const [sourceType, setSourceType] = useState('job_posting')
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingSeconds, setLoadingSeconds] = useState(0)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [ocrText, setOcrText] = useState('')
+  const [copiedReport, setCopiedReport] = useState(false)
+
+  // Loading elapsed timer
+  useEffect(() => {
+    let interval
+    if (loading) {
+      setLoadingSeconds(0)
+      interval = setInterval(() => {
+        setLoadingSeconds((prev) => prev + 1)
+      }, 1000)
+    } else {
+      setLoadingSeconds(0)
+    }
+    return () => clearInterval(interval)
+  }, [loading])
 
   // Handle incoming sample text from HomePage navigation
   useEffect(() => {
@@ -66,6 +90,16 @@ function AnalyzePage() {
       executeAnalysis(location.state.initialText, location.state?.initialSource || 'whatsapp')
     }
   }, [location.state])
+
+  // Auto-scroll smoothly to results when they arrive
+  useEffect(() => {
+    if (result && resultsRef.current) {
+      // Small timeout to allow DOM to paint
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [result])
 
   const executeAnalysis = async (contentToAnalyze, source) => {
     setError('')
@@ -128,10 +162,13 @@ function AnalyzePage() {
     }
   }
 
-  const handleLoadPreset = (preset) => {
+  const handleLoadPreset = (preset, autoRun = false) => {
     setText(preset.text)
     setSourceType(preset.type)
     setError('')
+    if (autoRun) {
+      executeAnalysis(preset.text, preset.type)
+    }
   }
 
   const handleReset = () => {
@@ -140,6 +177,62 @@ function AnalyzePage() {
     setResult(null)
     setError('')
     setOcrText('')
+    setTimeout(() => {
+      textareaRef.current?.focus()
+    }, 50)
+  }
+
+  const handleCopyReport = () => {
+    if (!result) return
+    const summary = `🛡️ JobShield AI Audit Report
+Threat Probability: ${result.scam_probability}% (${result.trust_level})
+ML Engine Score: ${result.ml_score}% | Heuristic Score: ${result.rule_score}%
+${result.risk_factors?.length ? `Key Red Flags Detected:\n- ${result.risk_factors.map(r => r.description || r.title).slice(0, 3).join('\n- ')}` : 'Verdict: No high-risk scam indicators found.'}
+
+Audited with JobShield AI: https://jobshield-ai.onrender.com`
+
+    navigator.clipboard.writeText(summary).then(() => {
+      setCopiedReport(true)
+      setTimeout(() => setCopiedReport(false), 2200)
+    })
+  }
+
+  const handleNavigateToReport = () => {
+    if (!result) return
+
+    // Extract best available identifier
+    const entities = result.web_intelligence?.entities || {}
+    let prefillIdentifier = ''
+    let prefillType = 'company'
+    let prefillCompany = ''
+
+    if (entities.emails && entities.emails.length > 0) {
+      prefillIdentifier = entities.emails[0]
+      prefillType = 'email'
+    } else if (entities.phones && entities.phones.length > 0) {
+      prefillIdentifier = entities.phones[0]
+      prefillType = 'phone'
+    } else if (entities.upi_ids && entities.upi_ids.length > 0) {
+      prefillIdentifier = entities.upi_ids[0]
+      prefillType = 'upi'
+    } else if (entities.domains && entities.domains.length > 0) {
+      prefillIdentifier = entities.domains[0]
+      prefillType = 'website'
+    }
+
+    if (entities.companies && entities.companies.length > 0) {
+      prefillCompany = entities.companies[0]
+    }
+
+    navigate('/report', {
+      state: {
+        prefillIdentifier,
+        prefillType,
+        prefillCompany,
+        prefillDescription: `Flagged by JobShield AI with ${result.scam_probability}% risk (${result.trust_level}). Message snippet: "${result.original_text?.slice(0, 140)}..."`,
+        prefillSource: sourceType,
+      },
+    })
   }
 
   return (
@@ -149,14 +242,14 @@ function AnalyzePage() {
         <div className="analyze-header animate-fade-in-up">
           <div className="analyze-badge">
             <Sparkles size={14} />
-            Multi-Layer Fraud Detection
+            Multi-Layer Neural Defense Engine
           </div>
           <h1 className="analyze-title">
             <Shield size={32} className="text-gradient-icon" />
             Scam Detection Studio
           </h1>
           <p className="analyze-subtitle">
-            Paste a suspicious recruitment message or upload a chat screenshot to run our hybrid ML classifier, domain authenticator, and live Google AI Deep Search.
+            Paste a recruitment message or upload a chat screenshot to audit for advance-fee traps, brand impersonation, and fraudulent domain signatures.
           </p>
         </div>
 
@@ -213,6 +306,7 @@ function AnalyzePage() {
                   </div>
 
                   <textarea
+                    ref={textareaRef}
                     className="input-field analyze-textarea"
                     placeholder="Paste the job description, WhatsApp message, email, or Telegram chat here..."
                     value={text}
@@ -222,16 +316,18 @@ function AnalyzePage() {
 
                   {/* 1-Click Preset Loaders */}
                   <div className="preset-container">
-                    <span className="preset-label">⚡ Quick Presets:</span>
+                    <span className="preset-label">⚡ Quick Test Presets (1-Click Run):</span>
                     <div className="preset-buttons">
                       {SAMPLE_PRESETS.map((preset, idx) => (
                         <button
                           key={idx}
                           type="button"
                           className="preset-chip"
-                          onClick={() => handleLoadPreset(preset)}
+                          onClick={() => handleLoadPreset(preset, true)}
+                          title="Click to load and automatically audit"
                         >
-                          {preset.label}
+                          <span>{preset.label}</span>
+                          <span className="preset-chip-badge">{preset.badge}</span>
                         </button>
                       ))}
                     </div>
@@ -247,6 +343,10 @@ function AnalyzePage() {
                     onFileSelect={setFile}
                     disabled={loading}
                   />
+                  <div className="ocr-note-banner">
+                    <Sparkles size={14} className="text-purple" />
+                    <span>Uses fast OCR text extraction to analyze screenshot text instantly.</span>
+                  </div>
                 </div>
               )}
 
@@ -268,7 +368,7 @@ function AnalyzePage() {
                   {loading ? (
                     <>
                       <Loader2 size={20} className="spinning" />
-                      Analyzing with AI...
+                      Auditing Security Signals... ({loadingSeconds}s)
                     </>
                   ) : (
                     <>
@@ -279,7 +379,7 @@ function AnalyzePage() {
                 </button>
 
                 {result && (
-                  <button className="btn btn-ghost" onClick={handleReset}>
+                  <button className="btn btn-ghost" onClick={handleReset} title="Clear and scan another">
                     <RotateCcw size={16} />
                     Reset
                   </button>
@@ -289,7 +389,7 @@ function AnalyzePage() {
           </div>
 
           {/* ── Right Results Panel ─────────────────────────────────────────── */}
-          <div className="analyze-results-panel">
+          <div className="analyze-results-panel" ref={resultsRef}>
             {loading && (
               <div className="analyze-loading glass animate-fade-in">
                 <div className="spinner-container">
@@ -298,22 +398,33 @@ function AnalyzePage() {
                     <Shield size={22} className="text-gradient-icon" />
                   </div>
                 </div>
-                <h3 className="loading-title">Running Multi-Layer Scam Investigation...</h3>
+                <h3 className="loading-title">
+                  Running Multi-Layer Scam Investigation...
+                </h3>
+                <span className="loading-timer-tag">Elapsed: {loadingSeconds}s</span>
+
+                {loadingSeconds >= 4 && (
+                  <div className="cloud-warmup-notice animate-fade-in">
+                    <Zap size={14} className="text-orange" />
+                    <span>Connecting to cloud engine... Running ML models, domain heuristics, and threat registry checks (~5-10s)</span>
+                  </div>
+                )}
+
                 <div className="loading-stages">
                   <div className="loading-stage-item">
-                    <span className="stage-dot dot-active"></span>
-                    <span>1. Local Hybrid ML Model (94.2% Accuracy)</span>
+                    <span className={`stage-dot ${loadingSeconds >= 1 ? 'dot-active' : 'dot-pulse'}`}></span>
+                    <span>1. NLP Linguistic Model & 13 Domain Indicators</span>
                   </div>
                   <div className="loading-stage-item">
-                    <span className="stage-dot dot-active"></span>
+                    <span className={`stage-dot ${loadingSeconds >= 2 ? 'dot-active' : 'dot-pulse'}`}></span>
                     <span>2. Heuristic Rules & Advance Fee Detection</span>
                   </div>
                   <div className="loading-stage-item">
-                    <span className="stage-dot dot-active"></span>
+                    <span className={`stage-dot ${loadingSeconds >= 3 ? 'dot-active' : 'dot-pulse'}`}></span>
                     <span>3. Brand Impersonation & 2,000+ Threat Registry Check</span>
                   </div>
                   <div className="loading-stage-item">
-                    <span className="stage-dot dot-pulse"></span>
+                    <span className={`stage-dot ${loadingSeconds >= 4 ? 'dot-active' : 'dot-pulse'}`}></span>
                     <span>4. ✨ Live Google AI Search Grounding (Gemini 2.5)</span>
                   </div>
                 </div>
@@ -322,6 +433,44 @@ function AnalyzePage() {
 
             {result && !loading && (
               <div className="results-stack stagger">
+                {/* ── Results Action Toolbar ─────────────────────────────── */}
+                <div className="results-toolbar glass animate-fade-in-up">
+                  <div className="toolbar-left">
+                    <span className="toolbar-status-badge">
+                      <CheckCircle2 size={15} className="text-emerald" />
+                      Investigation Complete
+                    </span>
+                  </div>
+                  <div className="toolbar-actions">
+                    <button
+                      className="btn btn-sm btn-secondary toolbar-btn"
+                      onClick={handleCopyReport}
+                      title="Copy audit summary to clipboard"
+                    >
+                      {copiedReport ? (
+                        <>
+                          <Check size={14} className="text-emerald" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} />
+                          Copy Report
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      className="btn btn-sm btn-danger toolbar-btn"
+                      onClick={handleNavigateToReport}
+                      title="Pre-fill scam report to protect other candidates"
+                    >
+                      <ShieldAlert size={14} />
+                      Report to Scam Registry
+                    </button>
+                  </div>
+                </div>
+
                 {/* 1. Main Risk Verdict Gauge */}
                 <ResultCard
                   scamProbability={result.scam_probability}
@@ -329,7 +478,7 @@ function AnalyzePage() {
                 />
 
                 {/* 2. Score Breakdown Bar */}
-                <div className="score-breakdown glass animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <div className="score-breakdown glass animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
                   <h4 className="breakdown-title">Engine Score Distribution</h4>
                   <div className="breakdown-bars">
                     <div className="breakdown-item">
@@ -393,7 +542,7 @@ function AnalyzePage() {
 
                 {/* 8. ML Feature Insights (XAI) */}
                 {result.ml_top_features && result.ml_top_features.length > 0 && (
-                  <div className="ml-features glass animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
+                  <div className="ml-features glass animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
                     <div className="ml-features-header">
                       <Brain size={18} className="text-indigo" />
                       <h3 className="ml-features-title">Explainable AI (XAI) Feature Weights</h3>

@@ -60,46 +60,45 @@ def _get_reader():
 
 def preprocess_image(image: Image.Image) -> Image.Image:
     """
-    Preprocess image for better OCR accuracy.
-
-    Steps:
-    1. Convert to RGB if needed
-    2. Upscale small images
-    3. Enhance contrast
-    4. Sharpen
+    Preprocess image for fast, accurate OCR.
+    Keeps size balanced to avoid heavy CPU convolution delay.
     """
     # Ensure RGB
     if image.mode != "RGB":
         image = image.convert("RGB")
 
-    # Upscale small images (improves OCR on phone screenshots)
     width, height = image.size
-    if width < 1000:
-        scale = 1500 / width
+    # If image is excessively large, scale down to max 1200px width for fast OCR
+    if width > 1200:
+        scale = 1200 / width
         image = image.resize(
             (int(width * scale), int(height * scale)),
-            Image.Resampling.LANCZOS,
+            Image.Resampling.BILINEAR,
+        )
+    elif width < 600:
+        # Scale up very small phone screenshots moderately
+        scale = 800 / width
+        image = image.resize(
+            (int(width * scale), int(height * scale)),
+            Image.Resampling.BILINEAR,
         )
 
-    # Enhance contrast
+    # Moderate contrast enhancement
     enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(1.5)
-
-    # Sharpen
-    image = image.filter(ImageFilter.SHARPEN)
+    image = enhancer.enhance(1.3)
 
     return image
 
 
 def extract_text_from_image(image_bytes: bytes) -> Dict:
     """
-    Extract text from an image using EasyOCR.
+    Extract text from an image using EasyOCR with fast greedy decoding.
 
     Args:
         image_bytes: Raw image bytes from uploaded file.
 
     Returns:
-        Dict with extracted_text, confidence, line_count, and raw_results.
+        Dict with extracted_text, confidence, line_count, and char_count.
     """
     reader = _get_reader()
 
@@ -118,13 +117,19 @@ def extract_text_from_image(image_bytes: bytes) -> Dict:
 
         # Convert to bytes for EasyOCR
         img_buffer = io.BytesIO()
-        image.save(img_buffer, format="PNG")
+        image.save(img_buffer, format="JPEG", quality=85)
         img_buffer.seek(0)
 
-        # Run OCR
-        results = reader.readtext(img_buffer.getvalue())
+        # Run OCR with fast greedy decoding and paragraph grouping
+        raw_results = reader.readtext(
+            img_buffer.getvalue(),
+            paragraph=True,
+            decoder="greedy",
+            batch_size=4,
+            detail=1,
+        )
 
-        if not results:
+        if not raw_results:
             return {
                 "success": True,
                 "extracted_text": "",
@@ -133,23 +138,28 @@ def extract_text_from_image(image_bytes: bytes) -> Dict:
                 "warning": "No text detected in the image.",
             }
 
-        # Aggregate results
         lines = []
         total_confidence = 0.0
 
-        for (bbox, text, confidence) in results:
-            lines.append(text)
-            total_confidence += confidence
+        for item in raw_results:
+            if len(item) >= 2:
+                # When detail=1 and paragraph=True: (bbox, text) or (bbox, text, conf)
+                text = str(item[1]).strip()
+                if text:
+                    lines.append(text)
+                conf = float(item[2]) if len(item) >= 3 and isinstance(item[2], (int, float)) else 0.85
+                total_confidence += conf
 
         extracted_text = "\n".join(lines)
-        avg_confidence = total_confidence / len(results) if results else 0.0
+        avg_confidence = total_confidence / len(raw_results) if raw_results else 0.85
 
         return {
             "success": True,
             "extracted_text": extracted_text,
-            "confidence": round(avg_confidence, 4),
+            "confidence": round(float(avg_confidence), 4),
             "line_count": len(lines),
             "char_count": len(extracted_text),
+            "engine": "easyocr",
         }
 
     except Exception as e:

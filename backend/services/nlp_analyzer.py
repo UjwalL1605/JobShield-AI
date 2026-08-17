@@ -6,10 +6,17 @@ Provides scam probability predictions with feature importance explanations.
 """
 
 import os
+import sys
 import re
 import joblib
 import numpy as np
 from typing import Dict, Optional
+
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 
 class NLPAnalyzer:

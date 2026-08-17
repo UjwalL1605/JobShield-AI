@@ -112,6 +112,19 @@ function HomePage() {
     })
   }
 
+  const [quickText, setQuickText] = useState('')
+
+  const handleQuickSubmit = (e) => {
+    e.preventDefault()
+    if (!quickText.trim()) return
+    navigate('/analyze', {
+      state: {
+        initialText: quickText.trim(),
+        initialSource: 'job_posting',
+      },
+    })
+  }
+
   return (
     <div className="innovative-home">
       {/* ── Section 1: Holographic Command Hero ────────────────────────────── */}
@@ -135,11 +148,52 @@ function HomePage() {
                 Don't lose money or identity to predatory hiring traps. JobShield AI combines <strong>high-capacity local NLP (94.2% precision)</strong> with <strong>Google Gemini 2.5 Flash live web grounding</strong> to audit job offers, emails, and WhatsApp screenshots in real time.
               </p>
 
+              {/* Interactive Instant Quick-Scan Box */}
+              <form className="hero-quick-scan-form glass" onSubmit={handleQuickSubmit}>
+                <div className="quick-scan-input-row">
+                  <input
+                    type="text"
+                    className="quick-scan-input"
+                    placeholder="Paste a suspicious job message or recruiter contact here..."
+                    value={quickText}
+                    onChange={(e) => setQuickText(e.target.value)}
+                  />
+                  <button type="submit" className="btn btn-primary quick-scan-btn">
+                    <Zap size={16} />
+                    <span>Scan Now</span>
+                  </button>
+                </div>
+                <div className="quick-scan-chips">
+                  <span className="quick-chip-label">Try instant demo:</span>
+                  <button
+                    type="button"
+                    className="quick-chip"
+                    onClick={() => handleLaunchStudioWithScenario(radarDemos[0])}
+                  >
+                    ⚡ WhatsApp Task Scam
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-chip"
+                    onClick={() => handleLaunchStudioWithScenario(radarDemos[1])}
+                  >
+                    ✉️ Fake TCS Offer
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-chip"
+                    onClick={() => handleLaunchStudioWithScenario(radarDemos[2])}
+                  >
+                    🟢 Genuine Infosys JD
+                  </button>
+                </div>
+              </form>
+
               {/* Action Trigger Bar */}
               <div className="hero-command-actions">
                 <Link to="/analyze" className="btn btn-primary btn-lg hero-action-btn">
                   <Zap size={18} />
-                  Scan a Job Offer Now
+                  Open Full Studio
                   <ArrowRight size={18} />
                 </Link>
                 <Link to="/about" className="btn btn-secondary btn-lg hero-action-btn">

@@ -115,6 +115,105 @@
   font-weight: 700;
 }
 
+/* Hero Quick Scan Form */
+.hero-quick-scan-form {
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 229, 153, 0.25);
+  background: rgba(13, 18, 31, 0.75);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .hero-quick-scan-form {
+  background: #ffffff;
+  border-color: rgba(5, 150, 105, 0.25);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+}
+
+.quick-scan-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.quick-scan-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+  font-family: var(--font-sans);
+  transition: all var(--transition-fast);
+}
+
+[data-theme="light"] .quick-scan-input {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.quick-scan-input:focus {
+  border-color: #00e599;
+  box-shadow: 0 0 0 3px rgba(0, 229, 153, 0.15);
+}
+
+.quick-scan-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+}
+
+.quick-scan-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-chip-label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+}
+
+.quick-chip {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+[data-theme="light"] .quick-chip {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.quick-chip:hover {
+  color: var(--text-primary);
+  border-color: #00e599;
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
 /* Action Buttons */
 .hero-command-actions {
   display: flex;

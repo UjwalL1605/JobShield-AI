@@ -1,14 +1,34 @@
 import axios from 'axios'
 
+const isLocalHost = () => {
+  if (typeof window === 'undefined') return false
+  const host = window.location.hostname
+  const port = window.location.port
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host.startsWith('192.168.') ||
+    host.startsWith('10.') ||
+    host.startsWith('172.') ||
+    host.endsWith('.local') ||
+    port === '5173' ||
+    port === '3000' ||
+    port === '8080'
+  )
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || (
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
+  isLocalHost()
+    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8000'
+        : `http://${window.location.hostname}:8000`)
     : 'https://jobshield-ai-4oev.onrender.com'
 )
 
 const client = axios.create({
   baseURL: API_BASE,
-  timeout: 90000, // 90s timeout for cloud cold starts and OCR
+  timeout: 45000, // 45s timeout max
   headers: {
     'Content-Type': 'application/json',
   },
