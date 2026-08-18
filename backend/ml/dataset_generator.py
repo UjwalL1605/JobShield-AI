@@ -194,45 +194,64 @@ PROJECT_TYPES = [
 FREELANCE_PLATFORMS = ["Upwork", "Fiverr", "Freelancer.com", "Truelancer", "our agency"]
 
 
-def _random_fee():
+def _random_fee() -> int:
+    """Generate a realistic random scam fee amount."""
     return random.choice([499, 599, 799, 999, 1499, 1999, 2499, 2999, 4999, 5999, 9999])
 
-def _random_cert_fee():
+
+def _random_cert_fee() -> int:
+    """Generate a realistic certificate or exam fee."""
     return random.choice([300, 500, 750, 1000, 1500])
 
-def _random_gig_amount():
+
+def _random_gig_amount() -> int:
+    """Generate a realistic freelance gig payment amount."""
     return random.choice([1500, 2500, 3500, 5000, 8000, 10000, 12000, 15000, 20000])
 
-def _random_scam_salary():
+
+def _random_scam_salary() -> str:
+    """Generate an unrealistic or high scam salary string."""
     return random.choice([
         "50,000", "75,000", "1,00,000", "1,20,000", "1,50,000",
         "2,00,000", "80,000", "60,000", "40,000", "25,000",
         "3,000", "5,000", "8,000", "10,000",
     ])
 
-def _random_legit_stipend():
+
+def _random_legit_stipend() -> str:
+    """Generate a realistic legitimate internship stipend string."""
     return random.choice([
         "10,000", "15,000", "20,000", "25,000", "30,000", "35,000", "40,000",
     ])
 
-def _random_ctc():
+
+def _random_ctc() -> str:
+    """Generate a realistic LPA package string."""
     return random.choice([
         "3.5", "4.0", "4.5", "5.0", "6.0", "7.0", "8.0",
         "10.0", "12.0", "15.0", "18.0", "20.0",
     ])
 
-def _random_years():
+
+def _random_years() -> str:
+    """Generate a random years of experience requirement."""
     return str(random.randint(1, 8))
 
-def _random_months():
+
+def _random_months() -> str:
+    """Generate a random internship duration in months."""
     return str(random.choice([2, 3, 4, 6]))
 
-def _random_date():
+
+def _random_date() -> str:
+    """Generate a random date string for deadlines/schedules."""
     months = ["January", "February", "March", "April", "May", "June",
               "July", "August", "September", "October", "November", "December"]
     return f"{random.randint(1, 28)} {random.choice(months)} 2025"
 
-def _fill_scam_template(template):
+
+def _fill_scam_template(template: str) -> str:
+    """Populate placeholders in a scam template with randomized entities."""
     return template.format(
         company=random.choice(SCAM_COMPANIES),
         fee=_random_fee(),
@@ -245,7 +264,9 @@ def _fill_scam_template(template):
         role=random.choice(ROLES),
     )
 
-def _fill_legit_template(template):
+
+def _fill_legit_template(template: str) -> str:
+    """Populate placeholders in a legitimate template with randomized entities."""
     skills = random.sample(SKILLS, min(3, len(SKILLS)))
     years_val = _random_years()
     years2_val = str(int(years_val) + random.randint(1, 3))
@@ -283,7 +304,8 @@ def _fill_legit_template(template):
         platform=random.choice(FREELANCE_PLATFORMS),
     )
 
-def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
+
+def generate_dataset(num_scam: int = 1400, num_legit: int = 1400, output_path: str = None) -> pd.DataFrame:
     """Generate a balanced synthetic dataset, tagged with template_id for grouped splitting."""
 
     if output_path is None:
@@ -298,18 +320,23 @@ def generate_dataset(num_scam=1400, num_legit=1400, output_path=None):
         text = _fill_scam_template(SCAM_TEMPLATES[idx])
         data.append({"text": text, "label": 1, "template_id": f"scam_{idx}"})
 
-    for _ in range(num_legit):
+    generated_legit = 0
+    attempts = 0
+    max_attempts = num_legit * 3
+    while generated_legit < num_legit and attempts < max_attempts:
+        attempts += 1
         idx = random.randrange(len(LEGIT_TEMPLATES))
         try:
             text = _fill_legit_template(LEGIT_TEMPLATES[idx])
+            data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
+            generated_legit += 1
         except (KeyError, IndexError):
             continue
-        data.append({"text": text, "label": 0, "template_id": f"legit_{idx}"})
 
     random.shuffle(data)
     df = pd.DataFrame(data)
     df.to_csv(output_path, index=False)
-    print(f"✅ Generated {len(df)} samples ({num_scam} scam, {len(df) - num_scam} legit)")
+    print(f"✅ Generated {len(df)} samples ({num_scam} scam, {generated_legit} legit)")
     print(f"   {len(SCAM_TEMPLATES)} scam templates, {len(LEGIT_TEMPLATES)} legit templates")
     print(f"   Saved to: {output_path}")
     return df

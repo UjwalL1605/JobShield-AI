@@ -7,8 +7,9 @@ Provides lookup functionality to warn future users.
 
 import os
 import sys
+import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 try:
@@ -17,42 +18,47 @@ except Exception:
     pass
 
 
+logger = logging.getLogger("jobshield.db")
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "scam_reports.db")
 
 
 def get_connection():
-    """Get SQLite connection with row factory."""
-    conn = sqlite3.connect(DB_PATH)
+    """Get SQLite connection with row factory (thread-safe)."""
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
 def init_db():
     """Initialize database tables."""
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.executescript("""
-        CREATE TABLE IF NOT EXISTS scam_reports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            report_type TEXT NOT NULL,
-            identifier TEXT NOT NULL,
-            company_name TEXT,
-            description TEXT,
-            source_platform TEXT,
-            reported_at TEXT NOT NULL,
-            report_count INTEGER DEFAULT 1
-        );
+        cursor.executescript("""
+            CREATE TABLE IF NOT EXISTS scam_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                report_type TEXT NOT NULL,
+                identifier TEXT NOT NULL,
+                company_name TEXT,
+                description TEXT,
+                source_platform TEXT,
+                reported_at TEXT NOT NULL,
+                report_count INTEGER DEFAULT 1
+            );
 
-        CREATE INDEX IF NOT EXISTS idx_identifier ON scam_reports(identifier);
-        CREATE INDEX IF NOT EXISTS idx_report_type ON scam_reports(report_type);
-        CREATE INDEX IF NOT EXISTS idx_company ON scam_reports(company_name);
-    """)
+            CREATE INDEX IF NOT EXISTS idx_identifier ON scam_reports(identifier);
+            CREATE INDEX IF NOT EXISTS idx_report_type ON scam_reports(report_type);
+            CREATE INDEX IF NOT EXISTS idx_company ON scam_reports(company_name);
+        """)
 
-    conn.commit()
-    conn.close()
-    print("✅ Database initialized")
+        conn.commit()
+    finally:
+        conn.close()
+    logger.info("✅ Database initialized")
 
 
 def add_report(
@@ -76,50 +82,51 @@ def add_report(
         Dict with report ID and status.
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    identifier_clean = identifier.strip().lower()
+        identifier_clean = identifier.strip().lower()
 
-    # Check if already reported
-    cursor.execute(
-        "SELECT id, report_count FROM scam_reports WHERE identifier = ? AND report_type = ?",
-        (identifier_clean, report_type)
-    )
-    existing = cursor.fetchone()
-
-    if existing:
-        # Increment report count
+        # Check if already reported
         cursor.execute(
-            "UPDATE scam_reports SET report_count = report_count + 1 WHERE id = ?",
-            (existing["id"],)
+            "SELECT id, report_count FROM scam_reports WHERE identifier = ? AND report_type = ?",
+            (identifier_clean, report_type)
         )
+        existing = cursor.fetchone()
+
+        if existing:
+            # Increment report count
+            cursor.execute(
+                "UPDATE scam_reports SET report_count = report_count + 1 WHERE id = ?",
+                (existing["id"],)
+            )
+            conn.commit()
+            return {
+                "status": "updated",
+                "id": existing["id"],
+                "report_count": existing["report_count"] + 1,
+                "message": f"This {report_type} has been reported {existing['report_count'] + 1} times.",
+            }
+
+        # Insert new report
+        cursor.execute(
+            """INSERT INTO scam_reports (report_type, identifier, company_name, description, source_platform, reported_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (report_type, identifier_clean, company_name, description, source_platform,
+             datetime.now(timezone.utc).isoformat())
+        )
+
+        report_id = cursor.lastrowid
         conn.commit()
-        conn.close()
+
         return {
-            "status": "updated",
-            "id": existing["id"],
-            "report_count": existing["report_count"] + 1,
-            "message": f"This {report_type} has been reported {existing['report_count'] + 1} times.",
+            "status": "created",
+            "id": report_id,
+            "report_count": 1,
+            "message": f"Thank you! Your {report_type} report has been recorded.",
         }
-
-    # Insert new report
-    cursor.execute(
-        """INSERT INTO scam_reports (report_type, identifier, company_name, description, source_platform, reported_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (report_type, identifier_clean, company_name, description, source_platform,
-         datetime.utcnow().isoformat())
-    )
-
-    report_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-
-    return {
-        "status": "created",
-        "id": report_id,
-        "report_count": 1,
-        "message": f"Thank you! Your {report_type} report has been recorded.",
-    }
+    finally:
+        conn.close()
 
 
 def check_identifier(identifier: str) -> Dict:
@@ -130,17 +137,19 @@ def check_identifier(identifier: str) -> Dict:
         Dict with found status, report count, and details.
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    identifier_clean = identifier.strip().lower()
+        identifier_clean = identifier.strip().lower()
 
-    cursor.execute(
-        """SELECT report_type, identifier, company_name, report_count, reported_at
-           FROM scam_reports WHERE identifier = ?""",
-        (identifier_clean,)
-    )
-    results = cursor.fetchall()
-    conn.close()
+        cursor.execute(
+            """SELECT report_type, identifier, company_name, report_count, reported_at
+               FROM scam_reports WHERE identifier = ?""",
+            (identifier_clean,)
+        )
+        results = cursor.fetchall()
+    finally:
+        conn.close()
 
     if not results:
         return {
@@ -201,38 +210,37 @@ def check_text_for_known_scams(text: str) -> List[Dict]:
 def get_recent_reports(limit: int = 20) -> List[Dict]:
     """Get most recent scam reports."""
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        """SELECT report_type, identifier, company_name, report_count, reported_at
-           FROM scam_reports ORDER BY reported_at DESC LIMIT ?""",
-        (limit,)
-    )
-    results = [dict(row) for row in cursor.fetchall()]
-    conn.close()
+        cursor.execute(
+            """SELECT report_type, identifier, company_name, report_count, reported_at
+               FROM scam_reports ORDER BY reported_at DESC LIMIT ?""",
+            (limit,)
+        )
+        results = [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
     return results
 
 
 def get_stats() -> Dict:
     """Get database statistics."""
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) as total FROM scam_reports")
-    total = cursor.fetchone()["total"]
+        cursor.execute("SELECT COUNT(*) as total FROM scam_reports")
+        total = cursor.fetchone()["total"]
 
-    cursor.execute(
-        "SELECT report_type, COUNT(*) as count FROM scam_reports GROUP BY report_type"
-    )
-    by_type = {row["report_type"]: row["count"] for row in cursor.fetchall()}
-
-    conn.close()
+        cursor.execute(
+            "SELECT report_type, COUNT(*) as count FROM scam_reports GROUP BY report_type"
+        )
+        by_type = {row["report_type"]: row["count"] for row in cursor.fetchall()}
+    finally:
+        conn.close()
 
     return {
         "total_reports": total,
         "by_type": by_type,
     }
-
-
-# Initialize DB on import
-init_db()

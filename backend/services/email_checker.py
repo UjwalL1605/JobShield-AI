@@ -9,44 +9,8 @@ import re
 from typing import List, Dict
 
 
-# Well-known free email providers
-FREE_PROVIDERS = {
-    "gmail.com", "yahoo.com", "yahoo.in", "yahoo.co.in",
-    "outlook.com", "hotmail.com", "live.com", "live.in",
-    "rediffmail.com", "mail.com", "protonmail.com",
-    "aol.com", "zoho.com", "yandex.com",
-    "icloud.com", "gmx.com", "fastmail.com",
-    "inbox.com", "tutanota.com", "guerrillamail.com",
-}
+from services.constants import FREE_PROVIDERS, COMPANY_NAMES, KNOWN_CORPORATE_DOMAINS
 
-# Known company name patterns that indicate impersonation
-COMPANY_NAMES = [
-    "google", "microsoft", "amazon", "apple", "meta", "facebook",
-    "tcs", "infosys", "wipro", "hcl", "cognizant", "capgemini",
-    "flipkart", "paytm", "razorpay", "phonepe", "swiggy", "zomato",
-    "reliance", "tata", "mahindra", "adani", "byju", "unacademy",
-    "deloitte", "kpmg", "accenture", "ibm", "oracle", "sap",
-    "salesforce", "adobe", "nvidia", "tesla", "uber", "ola",
-    "jpmogan", "goldman", "morgan stanley", "deutsche",
-]
-
-# Known corporate domains for major companies
-KNOWN_CORPORATE_DOMAINS = {
-    "google": ["google.com", "google.co.in"],
-    "microsoft": ["microsoft.com", "outlook.com"],
-    "amazon": ["amazon.com", "amazon.in"],
-    "tcs": ["tcs.com"],
-    "infosys": ["infosys.com"],
-    "wipro": ["wipro.com"],
-    "flipkart": ["flipkart.com"],
-    "paytm": ["paytm.com"],
-    "accenture": ["accenture.com"],
-    "deloitte": ["deloitte.com"],
-    "ibm": ["ibm.com"],
-    "oracle": ["oracle.com"],
-    "cognizant": ["cognizant.com"],
-    "capgemini": ["capgemini.com"],
-}
 
 
 def extract_emails(text: str) -> List[str]:

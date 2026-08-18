@@ -226,14 +226,7 @@ LEGIT_INDICATORS = {
 }
 
 # ─── Free Email Providers ───────────────────────────────────────────────────────
-
-FREE_EMAIL_PROVIDERS = {
-    "gmail.com", "yahoo.com", "yahoo.in", "yahoo.co.in",
-    "outlook.com", "hotmail.com", "live.com",
-    "rediffmail.com", "mail.com", "protonmail.com",
-    "aol.com", "zoho.com", "yandex.com",
-    "icloud.com", "gmx.com", "fastmail.com",
-}
+from services.constants import FREE_EMAIL_PROVIDERS
 
 # ─── Negation Handling ──────────────────────────────────────────────────────────
 

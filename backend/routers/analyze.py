@@ -7,6 +7,9 @@ and CPU-bound work (OCR, ML) is offloaded to a thread-pool so the event loop nev
 """
 
 import asyncio
+import hashlib
+import logging
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
@@ -21,10 +24,13 @@ from services.web_verifier import analyze_web_intelligence
 from services.gemini_search_analyzer import analyze_with_gemini_search, extract_text_from_image_gemini
 from database.db import check_text_for_known_scams
 
+logger = logging.getLogger("jobshield.analyze")
 router = APIRouter(prefix="/api/analyze", tags=["Analysis"])
 
 # Shared thread-pool for CPU-bound / blocking I/O tasks (OCR, ML inference, Gemini HTTP)
 _executor = ThreadPoolExecutor(max_workers=4)
+
+MAX_TEXT_LENGTH = 50_000
 
 
 # ─── Request / Response Models ───────────────────────────────────────────────────
@@ -67,7 +73,13 @@ async def analyze_text_endpoint(request: TextAnalysisRequest):
     if len(text) < 10:
         raise HTTPException(status_code=400, detail="Text too short for meaningful analysis")
 
-    return await _run_analysis_async(text, request.source_type)
+    if len(text) > MAX_TEXT_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Text exceeds maximum allowed length of {MAX_TEXT_LENGTH} characters."
+        )
+
+    return await _run_analysis_async(text, request.source_type or "job_posting")
 
 
 @router.post("/screenshot")
@@ -108,7 +120,7 @@ async def analyze_screenshot_endpoint(
 
     # If Gemini Vision failed or unavailable, fall back to EasyOCR
     if not ocr_result.get("success") or not ocr_result.get("extracted_text", "").strip():
-        print(f"[INFO] Gemini Vision OCR unavailable/empty, falling back to EasyOCR. Reason: {ocr_result.get('error', 'empty result')}")
+        logger.info(f"Gemini Vision OCR unavailable/empty, falling back to EasyOCR. Reason: {ocr_result.get('error', 'empty result')}")
         try:
             ocr_result = await loop.run_in_executor(
                 _executor,
@@ -149,6 +161,7 @@ async def analyze_screenshot_endpoint(
 
 # In-memory LRU-like cache for ultra-fast repeated/preset queries (<1ms)
 _analysis_cache = {}
+_cache_lock = threading.Lock()
 _CACHE_MAX_SIZE = 200
 
 
@@ -158,9 +171,12 @@ async def _run_analysis_async(text: str, source_type: str) -> dict:
     """
     Run the complete scam analysis pipeline concurrently with in-memory caching.
     """
-    cache_key = f"{source_type}:{hash(text.strip())}"
-    if cache_key in _analysis_cache:
-        return _analysis_cache[cache_key]
+    text_hash = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:16]
+    cache_key = f"{source_type}:{text_hash}"
+
+    with _cache_lock:
+        if cache_key in _analysis_cache:
+            return _analysis_cache[cache_key]
 
     loop = asyncio.get_running_loop()
 
@@ -265,9 +281,10 @@ async def _run_analysis_async(text: str, source_type: str) -> dict:
         "source_type":         source_type,
     }
 
-    # Store in memory cache
-    if len(_analysis_cache) >= _CACHE_MAX_SIZE:
-        _analysis_cache.pop(next(iter(_analysis_cache)))
-    _analysis_cache[cache_key] = res
+    # Store in memory cache with lock
+    with _cache_lock:
+        if len(_analysis_cache) >= _CACHE_MAX_SIZE:
+            _analysis_cache.pop(next(iter(_analysis_cache)))
+        _analysis_cache[cache_key] = res
 
     return res

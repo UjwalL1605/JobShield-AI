@@ -8,9 +8,13 @@ Provides scam probability predictions with feature importance explanations.
 import os
 import sys
 import re
+import logging
+import threading
 import joblib
 import numpy as np
 from typing import Dict, Optional
+
+logger = logging.getLogger("jobshield.nlp")
 
 try:
     if hasattr(sys.stdout, "reconfigure"):
@@ -39,14 +43,19 @@ class NLPAnalyzer:
         model_path = os.path.join(self.model_dir, "scam_classifier.pkl")
 
         if not os.path.exists(tfidf_path) or not os.path.exists(model_path):
-            print("⚠️  Trained model not found. Run ml/train_model.py first.")
+            logger.warning("⚠️  Trained model not found. Run ml/train_model.py first.")
             return False
 
         self.vectorizer = joblib.load(tfidf_path)
         self.classifier = joblib.load(model_path)
         self._loaded = True
-        print("✅ NLP model loaded successfully")
+        logger.info("✅ NLP model loaded successfully")
         return True
+
+    @property
+    def is_loaded(self) -> bool:
+        """Whether the ML model is loaded and ready for inference."""
+        return self._loaded
 
     def preprocess(self, text: str) -> str:
         """Preprocess text for model input."""
@@ -90,7 +99,12 @@ class NLPAnalyzer:
 
         # Predict probability
         proba = self.classifier.predict_proba(X)[0]
-        scam_prob = proba[1]  # Probability of scam class
+        # Guard: handle edge case where model only has one class
+        if len(proba) < 2:
+            scam_idx = list(self.classifier.classes_).index(1) if 1 in self.classifier.classes_ else 0
+            scam_prob = proba[scam_idx]
+        else:
+            scam_prob = proba[1]  # Probability of scam class
         confidence = max(proba)
 
         # Get top contributing features (XAI)
@@ -140,14 +154,17 @@ class NLPAnalyzer:
         return features
 
 
-# ─── Singleton Instance ──────────────────────────────────────────────────────────
+# ─── Singleton Instance ──────────────────────────────────────────────────────────────
 _analyzer_instance = None
+_analyzer_lock = threading.Lock()
 
 
 def get_analyzer() -> NLPAnalyzer:
-    """Get or create the singleton NLP analyzer."""
+    """Get or create the singleton NLP analyzer (thread-safe)."""
     global _analyzer_instance
     if _analyzer_instance is None:
-        _analyzer_instance = NLPAnalyzer()
-        _analyzer_instance.load_model()
+        with _analyzer_lock:
+            if _analyzer_instance is None:  # double-checked locking
+                _analyzer_instance = NLPAnalyzer()
+                _analyzer_instance.load_model()
     return _analyzer_instance

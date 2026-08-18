@@ -11,7 +11,7 @@ import sys
 import re
 import sqlite3
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BACKEND_DIR not in sys.path:
@@ -55,7 +55,7 @@ def seed_database():
                 cursor.execute("""
                     INSERT OR IGNORE INTO scam_reports (report_type, identifier, company_name, description, source_platform, reported_at, report_count)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, ("phone", p.lower(), None, f"Reported in {stype} recruitment fraud", platform, datetime.utcnow().isoformat(), 3))
+                """, ("phone", p.lower(), None, f"Reported in {stype} recruitment fraud", platform, datetime.now(timezone.utc).isoformat(), 3))
                 inserted_count += 1
 
         # 2. Extract and seed domains / URLs
@@ -66,7 +66,7 @@ def seed_database():
                 cursor.execute("""
                     INSERT OR IGNORE INTO scam_reports (report_type, identifier, company_name, description, source_platform, reported_at, report_count)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, ("website", u.lower(), None, f"Phishing / Scam link reported in {stype}", platform, datetime.utcnow().isoformat(), 4))
+                """, ("website", u.lower(), None, f"Phishing / Scam link reported in {stype}", platform, datetime.now(timezone.utc).isoformat(), 4))
                 inserted_count += 1
 
         # 3. Extract fake HR company entities
@@ -77,7 +77,7 @@ def seed_database():
                 cursor.execute("""
                     INSERT OR IGNORE INTO scam_reports (report_type, identifier, company_name, description, source_platform, reported_at, report_count)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, ("company", c.lower(), c, f"Suspicious entity associated with {stype}", platform, datetime.utcnow().isoformat(), 2))
+                """, ("company", c.lower(), c, f"Suspicious entity associated with {stype}", platform, datetime.now(timezone.utc).isoformat(), 2))
                 inserted_count += 1
 
     conn.commit()

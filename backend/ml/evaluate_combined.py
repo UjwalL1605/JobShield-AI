@@ -9,6 +9,7 @@ This tells you whether the negation fix in rule_engine.py actually improved
 the end-to-end system the user experiences, not just the rule engine alone.
 """
 
+import asyncio
 import os
 import sys
 import numpy as np
@@ -21,12 +22,12 @@ from sklearn.metrics import (
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from evaluate_real import TEST_SET, evaluate as evaluate_real   # reuse the same 27 examples + live accuracy
-from routers.analyze import _run_analysis                        # the real production pipeline
+from routers.analyze import _run_analysis_async                  # the real production pipeline
 
 SCAM_THRESHOLD = 50.0  # combined score >= this => classified as scam
 
 
-def evaluate():
+async def _evaluate_pipeline_async():
     # Get the raw-ML-only baseline live, computed fresh against whatever
     # model is currently saved in ml/models/ — no more hardcoded numbers
     # going stale after every retrain. Runs silently (verbose=False) since
@@ -38,7 +39,7 @@ def evaluate():
     results = []
 
     for text, true_label in TEST_SET:
-        result = _run_analysis(text, "job_posting")
+        result = await _run_analysis_async(text, "job_posting")
         combined_score = result["scam_probability"]
         predicted_label = 1 if combined_score >= SCAM_THRESHOLD else 0
 
@@ -91,6 +92,11 @@ def evaluate():
     print(f"\n📊 Compare to raw-ML-only baseline: {ml_only_accuracy*100:.2f}% accuracy (from evaluate_real.py, computed live)")
     print(f"   Full pipeline accuracy: {accuracy*100:.2f}%")
     print("\n✅ Evaluation complete!")
+    return accuracy
+
+
+def evaluate():
+    return asyncio.run(_evaluate_pipeline_async())
 
 
 if __name__ == "__main__":

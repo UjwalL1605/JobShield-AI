@@ -6,7 +6,7 @@ realistic benchmarks based on context (role, experience, work type).
 """
 
 import re
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 
 # ─── Salary Benchmarks (INR Monthly) ────────────────────────────────────────────

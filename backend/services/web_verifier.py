@@ -10,54 +10,12 @@ import re
 import urllib.parse
 from typing import Dict, List, Optional
 
-# Verified Official Domains for Top MNCs / Indian Employers
-KNOWN_LEGIT_COMPANIES = {
-    "google": ["google.com", "careers.google.com", "abc.xyz"],
-    "microsoft": ["microsoft.com", "careers.microsoft.com"],
-    "amazon": ["amazon.com", "amazon.jobs", "amazon.in"],
-    "apple": ["apple.com", "jobs.apple.com"],
-    "meta": ["meta.com", "metacareers.com", "fb.com"],
-    "tcs": ["tcs.com", "careers.tcs.com", "nextstep.tcs.com"],
-    "infosys": ["infosys.com", "career.infosys.com"],
-    "wipro": ["wipro.com", "careers.wipro.com"],
-    "hcl": ["hcltech.com", "hcl.com"],
-    "tech mahindra": ["techmahindra.com"],
-    "cognizant": ["cognizant.com", "careers.cognizant.com"],
-    "deloitte": ["deloitte.com"],
-    "accenture": ["accenture.com"],
-    "ibm": ["ibm.com", "careers.ibm.com"],
-    "capgemini": ["capgemini.com"],
-    "flipkart": ["flipkart.com", "flipkartcareers.com"],
-    "zomato": ["zomato.com"],
-    "swiggy": ["swiggy.in"],
-    "paytm": ["paytm.com"],
-    "jio": ["jio.com", "ril.com"],
-    "tata": ["tata.com", "tatamotors.com", "tatasteel.com"],
-    "l&t": ["larsentoubro.com"],
-    "hdfc": ["hdfcbank.com"],
-    "icici": ["icicibank.com"],
-    "sbi": ["sbi.co.in", "bank.sbi"],
-}
-
-# Suspicious / Cheap TLDs heavily used in recruitment scams & phishing
-HIGH_RISK_TLDS = {
-    ".xyz", ".top", ".site", ".online", ".club", ".work", ".link",
-    ".info", ".live", ".tk", ".ml", ".ga", ".cf", ".gq", ".buzz",
-    ".icu", ".monster", ".uno", ".cc", ".fun", ".rest"
-}
-
-# Known URL Shorteners that mask the true destination
-URL_SHORTENERS = {
-    "bit.ly", "tinyurl.com", "is.gd", "cutt.ly", "rb.gy", "shorturl.at",
-    "t.co", "ow.ly", "buff.ly", "adf.ly", "goo.gl"
-}
-
-# Free Webmail Providers (Unprofessional for corporate recruitment)
-FREE_EMAIL_DOMAINS = {
-    "gmail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com",
-    "rediffmail.com", "protonmail.com", "zoho.com", "aol.com", "yandex.com",
-    "mail.com", "gmx.com", "inbox.com", "icloud.com"
-}
+from services.constants import (
+    KNOWN_LEGIT_COMPANIES,
+    HIGH_RISK_TLDS,
+    URL_SHORTENERS,
+    FREE_EMAIL_DOMAINS,
+)
 
 
 def extract_entities(text: str) -> Dict:
@@ -67,7 +25,6 @@ def extract_entities(text: str) -> Dict:
     emails = list(set(re.findall(email_pattern, text)))
 
     # 2. URLs and Domains
-    url_pattern = r'https?://(?:www\.)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:/[^\s]*)?'
     raw_urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', text)
     domains = set()
     for u in raw_urls:

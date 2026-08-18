@@ -5,8 +5,8 @@ Endpoints for submitting and querying scam reports.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, Literal
 
 from database.db import add_report, check_identifier, get_recent_reports, get_stats
 
@@ -16,15 +16,15 @@ router = APIRouter(prefix="/api/report", tags=["Reports"])
 # ─── Request Models ──────────────────────────────────────────────────────────────
 
 class ScamReport(BaseModel):
-    report_type: str  # email, phone, website, upi, company
-    identifier: str
+    report_type: Literal["email", "phone", "website", "upi", "company"]
+    identifier: str = Field(..., min_length=1)
     company_name: Optional[str] = None
     description: Optional[str] = None
     source_platform: Optional[str] = None
 
 
 class CheckRequest(BaseModel):
-    identifier: str
+    identifier: str = Field(..., min_length=1)
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────────
@@ -32,13 +32,6 @@ class CheckRequest(BaseModel):
 @router.post("/submit")
 async def submit_report(report: ScamReport):
     """Submit a new scam report."""
-    valid_types = {"email", "phone", "website", "upi", "company"}
-    if report.report_type not in valid_types:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid report_type. Must be one of: {', '.join(valid_types)}"
-        )
-
     if not report.identifier.strip():
         raise HTTPException(status_code=400, detail="Identifier cannot be empty")
 

@@ -9,9 +9,12 @@ known scam reports on Reddit, Glassdoor, Quora, and official registries.
 import os
 import re
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Optional
 from dotenv import load_dotenv
+
+logger = logging.getLogger("jobshield.gemini")
 
 # Load environment variables from backend/.env explicitly
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
@@ -24,7 +27,7 @@ def get_genai_client():
     """Get or initialize Google GenAI client if API key is present."""
     global _client
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
+    if not api_key or api_key == "your_api_key_here":
         return None
 
     if _client is None:
@@ -32,7 +35,7 @@ def get_genai_client():
             from google import genai
             _client = genai.Client(api_key=api_key)
         except Exception as e:
-            print(f"[WARN] Failed to initialize Google GenAI Client: {e}")
+            logger.warning(f"Failed to initialize Google GenAI Client: {e}")
             return None
 
     return _client
@@ -142,9 +145,9 @@ Return ONLY a valid JSON object matching this exact schema:
     except Exception as e:
         err_str = str(e)
         if "API_KEY" in err_str.upper() or "INVALID" in err_str.upper() or "PERMISSION" in err_str.upper():
-            print(f"[WARN] Gemini API key is invalid or expired. Update GEMINI_API_KEY in backend/.env")
+            logger.warning("Gemini API key is invalid or expired. Update GEMINI_API_KEY in backend/.env")
         else:
-            print(f"[WARN] Gemini Search Analysis failed: {e}")
+            logger.warning(f"Gemini Search Analysis failed: {e}")
         return {
             "available": False,
             "error": err_str,
@@ -212,7 +215,7 @@ def extract_text_from_image_gemini(image_bytes: bytes, mime_type: str = "image/p
         }
 
     except Exception as e:
-        print(f"[WARN] Gemini Vision OCR failed: {e}")
+        logger.warning(f"Gemini Vision OCR failed: {e}")
         return {
             "success": False,
             "extracted_text": "",

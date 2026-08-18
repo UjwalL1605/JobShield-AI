@@ -55,6 +55,8 @@ frontend/dist-ssr/
 .DS_Store
 Thumbs.db
 
-# Database journals & scratch
+# Database files & journals
+*.db
 *.db-journal
+backend/database/*.db
 backend/database/*.db-journal
