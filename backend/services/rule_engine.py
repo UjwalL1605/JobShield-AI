@@ -16,6 +16,7 @@ SCAM_KEYWORDS = {
         "severity": "high",
         "description": "Payment or fee request detected",
         "keywords": [
+            # Explicit symbol-based
             "registration fee", "processing fee", "security deposit",
             "training fee", "admission fee", "application fee",
             "verification fee", "exam fee", "one-time fee",
@@ -23,9 +24,29 @@ SCAM_KEYWORDS = {
             "deposit ₹", "deposit rs", "membership fee",
             "joining fee", "onboarding fee", "background verification fee",
             "pay to confirm", "pay to register", "pay to start",
-            "fee of ₹", "fee of rs", "charge of ₹","training fee", "admission fee", "application fee",
+            "fee of ₹", "fee of rs", "charge of ₹",
             "training material fee", "course material fee", "material fee",
             "certificate fee", "certification fee", "platform fee",
+            # Additional fee types (no ₹ required)
+            "hr processing fee", "documentation fee", "documentation charge",
+            "verification charge", "document verification fee",
+            "onboarding fee", "background check fee",
+            "security fee", "slot booking fee",
+            "enrollment fee", "enrollment cost", "training enrollment",
+            "appointment letter fee", "appointment fee",
+            "id generation fee", "id card fee",
+            # Refund promise (classic scam tactic)
+            "refundable deposit", "fully refundable", "completely refundable",
+            "refunded with your first salary", "refunded with first month",
+            "adjusted against your first", "adjusted against first month",
+            "deducted from first salary", "deducted from salary",
+            "documentation and verification", "verification and documentation",
+            "background verification process", "employee verification process",
+            # Generic pay + amount patterns handled by regex (see below)
+            "please pay", "you must pay", "need to pay", "required to pay",
+            "make payment", "complete payment", "complete the payment",
+            "pay before", "payment must be", "payment is required",
+            "total cost is", "total amount is", "fees to be paid",
         ],
     },
     "urgency_language": {
@@ -35,22 +56,43 @@ SCAM_KEYWORDS = {
             "limited seats", "offer expires", "act now",
             "hurry", "last chance", "final call",
             "immediately", "within 24 hours", "within 2 hours",
+            "within 48 hours", "within 12 hours", "within 6 hours",
             "don't miss", "limited time", "only today",
             "before all positions", "seats left", "expires today",
             "apply now before", "urgent hiring", "urgent requirement",
             "quick hiring", "instant joining", "immediate joining",
+            "valid for only 24 hours", "valid for only 48 hours",
+            "before 6:00 pm", "before 6 pm", "before today",
+            "finalize your joining", "avoid cancellation",
+            "offer will be cancelled", "offer will expire",
         ],
     },
     "guaranteed_outcomes": {
         "severity": "high",
-        "description": "Unrealistic guarantees detected",
+        "description": "Unrealistic guarantees or no-interview selection detected",
         "keywords": [
             "guaranteed placement", "100% placement", "guaranteed job",
             "guaranteed returns", "guaranteed income", "100% guaranteed",
             "assured placement", "sure shot", "confirm your seat",
             "guaranteed selection", "no interview required",
+            "no technical interview", "no further interview",
             "no experience needed", "no skills required",
             "no qualification needed", "no resume needed",
+            # Selection without process
+            "selected based on your online profile",
+            "selected from our candidate database",
+            "selected from our database",
+            "selection has been completed",
+            "shortlisted based on your resume",
+            "profile has been selected",
+            "your profile was selected",
+            # 'No interview' variants (with/without 'is')
+            "no interview is required",
+            "no further interview is required",
+            "no technical interview is required",
+            "without any interview",
+            "no rounds of interview",
+            "skip the interview",
         ],
     },
     "payment_methods": {
@@ -126,6 +168,8 @@ SCAM_KEYWORDS = {
             "bank passbook", "date of birth and address", "screenshot of your bank",
             "share your bank", "kyc is pending", "complete your kyc",
             "verify your identity by sharing", "banking details for",
+            "send the transaction screenshot", "send payment screenshot",
+            "payment confirmation", "send aadhaar", "send pan card",
         ],
     },
     "investment_scam": {
@@ -136,6 +180,21 @@ SCAM_KEYWORDS = {
             "task group", "complete simple tasks", "task assignments",
             "starting investment", "open your trading account",
             "weekly returns", "unlock higher paying tasks",
+        ],
+    },
+    "fake_selection_process": {
+        "severity": "high",
+        "description": "Fraudulent selection or offer letter process detected",
+        "keywords": [
+            "appointment letter", "offer letter will be generated",
+            "employee id will be generated", "generate your appointment",
+            "joining letter", "generate your offer letter",
+            "your selection is confirmed", "your seat is confirmed",
+            "reserve your internship seat", "reserve your seat",
+            "activate your internship account", "activate your account",
+            "fast-track hiring", "fast track hiring",
+            "no technical round", "no aptitude test",
+            "direct selection", "direct joining",
         ],
     },
 }
@@ -207,6 +266,28 @@ def _is_negated(text_lower: str, match_start: int, window_chars: int = 30) -> bo
             return True
     return False
 
+# ─── Regex Patterns for Amount-Based Fee Detection ──────────────────────────────
+# Catches "pay a 1499", "paying 2250", "cost is 1200", "fee of 999" etc.
+# even when no ₹/Rs symbol is present (common in informal scam emails).
+_AMOUNT_FEE_PATTERNS = [
+    # "pay a 999", "pay 1499", "paying 2250", "pay a 1750"
+    re.compile(r'\bpay(?:ing)?\s+(?:a\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    # "fee of 999", "fee of rs 2250", "fees of 1499"
+    re.compile(r'\bfees?\s+(?:of\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    # "charge of 1750", "charges of 500"
+    re.compile(r'\bcharges?\s+(?:of\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    # "cost is 1200", "total cost is 799", "cost of 999"
+    re.compile(r'\bcost\s+(?:is\s+|of\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    # "deposit of 999", "deposit 1499", "a 999 deposit"
+    re.compile(r'\bdeposit\s+(?:of\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    re.compile(r'\b(?:a\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\s+(?:refundable\s+)?(?:security\s+)?deposit\b', re.I),
+    # "amount is 2250", "amount of 799"
+    re.compile(r'\bamount\s+(?:is\s+|of\s+)?(?:rs\.?\s*|₹\s*|inr\s*)?[1-9][\d,]{2,}\b', re.I),
+    # "a ₹999", "a Rs 1499" (amount after article)
+    re.compile(r'\ba\s+(?:rs\.?\s*|₹\s*|inr\s*)[1-9][\d,]{2,}\b', re.I),
+]
+
+
 def analyze_text(text: str) -> Dict:
     """
     Run rule-based scam analysis on text.
@@ -220,7 +301,7 @@ def analyze_text(text: str) -> Dict:
     found_keywords = []
     legit_count = 0
 
-   # ── Check scam keyword categories (negation-aware) ──────────────────────
+    # ── Check scam keyword categories (negation-aware) ──────────────────────
     negated_matches_count = 0
 
     for category, info in SCAM_KEYWORDS.items():
@@ -229,7 +310,7 @@ def analyze_text(text: str) -> Dict:
             if keyword.lower() not in text_lower:
                 continue
 
-            for m in re.finditer(re.escape(keyword), text_lower):
+            for m in re.finditer(re.escape(keyword.lower()), text_lower):
                 if category in NEGATABLE_CATEGORIES and _is_negated(text_lower, m.start()):
                     # "no registration fee" — skip this occurrence, it's not a risk signal
                     negated_matches_count += 1
@@ -251,6 +332,38 @@ def analyze_text(text: str) -> Dict:
                 "description": info["description"],
                 "matched_keywords": matched,
                 "count": len(matched),
+            })
+
+    # ── Regex-based amount fee detection (no ₹ symbol required) ─────────────
+    amount_matches = []
+    for pattern in _AMOUNT_FEE_PATTERNS:
+        for m in pattern.finditer(text):
+            matched_text = m.group()
+            # Respect negation: "no fee of 999", "without any payment"
+            if not _is_negated(text_lower, m.start(), window_chars=40):
+                amount_matches.append(matched_text)
+                found_keywords.append({
+                    "keyword": matched_text,
+                    "start": m.start(),
+                    "end": m.end(),
+                    "category": "fee_request",
+                    "severity": "high",
+                })
+
+    # Deduplicate and group amount matches as a risk factor
+    if amount_matches:
+        # Check if fee_request already has a risk factor entry
+        existing = next((r for r in risk_factors if r["category"] == "fee_request"), None)
+        if existing:
+            existing["matched_keywords"].extend(amount_matches)
+            existing["count"] += len(amount_matches)
+        else:
+            risk_factors.append({
+                "category": "fee_request",
+                "severity": "high",
+                "description": "Payment amount request detected (without currency symbol)",
+                "matched_keywords": amount_matches,
+                "count": len(amount_matches),
             })
 
     # ── Check legitimate indicators ──────────────────────────────────────────
@@ -453,13 +566,13 @@ def _calculate_score(risk_factors: List[Dict], legit_count: int) -> float:
 
 def get_trust_level(score: float) -> str:
     """Convert scam probability to trust level label."""
-    if score < 20:
+    if score < 25:
         return "Safe"
-    elif score < 40:
+    elif score < 45:
         return "Likely Safe"
-    elif score < 60:
+    elif score < 62:
         return "Suspicious"
-    elif score < 80:
+    elif score < 78:
         return "High Risk"
     else:
         return "Very High Risk"

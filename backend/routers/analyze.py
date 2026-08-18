@@ -204,7 +204,22 @@ async def _run_analysis_async(text: str, source_type: str) -> dict:
         gemini_score   = gemini_result["scam_score"]
         combined_score = (gemini_score * 0.40) + (ml_score * 0.35) + (rule_score * 0.25)
     else:
-        combined_score = (ml_score * 0.60) + (rule_score * 0.40)
+        # Weighted average
+        weighted = (ml_score * 0.55) + (rule_score * 0.45)
+        # When rule_score is very high (multiple strong keyword hits), it is a
+        # reliable indicator — don't let a low ML score on an unseen company name
+        # suppress a clear pattern match.
+        if rule_score >= 35:
+            floor = rule_score * 0.85
+        else:
+            floor = max(ml_score, rule_score) * 0.70
+        combined_score = max(weighted, floor)
+
+    # Boost when both signals independently agree it's a scam (convergent evidence)
+    if ml_score >= 70 and rule_score >= 30:
+        combined_score = min(100.0, combined_score + 8)
+    if ml_score >= 85 and rule_score >= 50:
+        combined_score = min(100.0, combined_score + 5)
 
     # Boost for web intelligence signals (brand impersonation, high-risk TLDs)
     if web_intel.get("risk_boost"):
