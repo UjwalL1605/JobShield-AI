@@ -98,3 +98,16 @@ def test_report_recent_and_stats():
     res_stats = client.get("/api/report/stats")
     assert res_stats.status_code == 200
     assert "total_reports" in res_stats.json()
+
+
+def test_orchestrator_caching():
+    payload = {
+        "text": "Join our software engineering campus drive with test caching verification text.",
+        "source_type": "job_posting",
+    }
+    res1 = client.post("/api/analyze/text", json=payload)
+    assert res1.status_code == 200
+    res2 = client.post("/api/analyze/text", json=payload)
+    assert res2.status_code == 200
+    assert res1.json()["scam_probability"] == res2.json()["scam_probability"]
+

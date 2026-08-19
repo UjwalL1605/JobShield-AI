@@ -2,33 +2,26 @@
 JobShield AI — Analysis API Routes
 
 Endpoints for text analysis and screenshot scanning.
-Optimized: independent pipeline steps run concurrently via asyncio.gather()
-and CPU-bound work (OCR, ML) is offloaded to a thread-pool so the event loop never blocks.
+Delegates heavy processing and score synthesis to the Orchestrator Service.
 """
 
 import asyncio
-import hashlib
 import logging
-import threading
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
 
-from services.nlp_analyzer import get_analyzer
-from services.rule_engine import analyze_text as rule_analyze, get_trust_level
-from services.email_checker import analyze_emails_in_text
-from services.salary_checker import check_salary
+from limiter import limiter
+from services.orchestrator import run_analysis_pipeline
 from services.ocr_service import extract_text_from_image
-from services.web_verifier import analyze_web_intelligence
-from services.gemini_search_analyzer import analyze_with_gemini_search, extract_text_from_image_gemini
-from database.db import check_text_for_known_scams
+from services.gemini_search_analyzer import extract_text_from_image_gemini
 
 logger = logging.getLogger("jobshield.analyze")
 router = APIRouter(prefix="/api/analyze", tags=["Analysis"])
 
-# Shared thread-pool for CPU-bound / blocking I/O tasks (OCR, ML inference, Gemini HTTP)
-_executor = ThreadPoolExecutor(max_workers=4)
+# Thread pool for OCR processing
+_ocr_executor = ThreadPoolExecutor(max_workers=4)
 
 MAX_TEXT_LENGTH = 50_000
 
@@ -60,12 +53,13 @@ class AnalysisResponse(BaseModel):
 # ─── Endpoints ───────────────────────────────────────────────────────────────────
 
 @router.post("/text", response_model=AnalysisResponse)
-async def analyze_text_endpoint(request: TextAnalysisRequest):
+@limiter.limit("30/minute")
+async def analyze_text_endpoint(request: Request, body: TextAnalysisRequest):
     """
     Analyze pasted text (job description, email, chat message) for scam indicators.
-    All heavy steps run concurrently — typical response time reduced significantly.
+    All heavy steps run concurrently via the Orchestrator.
     """
-    text = request.text.strip()
+    text = body.text.strip()
 
     if not text:
         raise HTTPException(status_code=400, detail="Text cannot be empty")
@@ -79,19 +73,20 @@ async def analyze_text_endpoint(request: TextAnalysisRequest):
             detail=f"Text exceeds maximum allowed length of {MAX_TEXT_LENGTH} characters."
         )
 
-    return await _run_analysis_async(text, request.source_type or "job_posting")
+    return await run_analysis_pipeline(text, body.source_type or "job_posting")
 
 
 @router.post("/screenshot")
+@limiter.limit("10/minute")
 async def analyze_screenshot_endpoint(
+    request: Request,
     file: UploadFile = File(...),
     source_type: str = Form("whatsapp"),
 ):
     """
     Upload a screenshot for OCR extraction and scam analysis.
     Supported formats: PNG, JPG, JPEG, WebP.
-    Uses Gemini Vision (fast, ~5s) as primary OCR engine.
-    Falls back to EasyOCR if Gemini is unavailable.
+    Uses Gemini Vision as primary OCR engine, falling back to EasyOCR.
     """
     # Validate and normalise file type
     allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
@@ -101,7 +96,6 @@ async def analyze_screenshot_endpoint(
             status_code=400,
             detail=f"Unsupported file type: {content_type}. Use PNG, JPG, or WebP."
         )
-    # Normalise image/jpg → image/jpeg for Gemini
     mime_type = "image/jpeg" if content_type == "image/jpg" else content_type
 
     # Read file bytes
@@ -112,18 +106,17 @@ async def analyze_screenshot_endpoint(
 
     loop = asyncio.get_running_loop()
 
-    # ── Step 1: OCR — try Gemini Vision first (fast ~3-8s), fallback to EasyOCR ──
+    # ── Step 1: OCR — try Gemini Vision first, fallback to EasyOCR ──
     ocr_result = await loop.run_in_executor(
-        _executor,
+        _ocr_executor,
         lambda: extract_text_from_image_gemini(image_bytes, mime_type),
     )
 
-    # If Gemini Vision failed or unavailable, fall back to EasyOCR
     if not ocr_result.get("success") or not ocr_result.get("extracted_text", "").strip():
         logger.info(f"Gemini Vision OCR unavailable/empty, falling back to EasyOCR. Reason: {ocr_result.get('error', 'empty result')}")
         try:
             ocr_result = await loop.run_in_executor(
-                _executor,
+                _ocr_executor,
                 extract_text_from_image,
                 image_bytes,
             )
@@ -146,7 +139,7 @@ async def analyze_screenshot_endpoint(
         }
 
     # ── Step 2: Run full concurrent scam analysis on extracted text ──────────────
-    analysis = await _run_analysis_async(extracted_text, source_type)
+    analysis = await run_analysis_pipeline(extracted_text, source_type)
 
     return {
         "ocr_result": {
@@ -159,132 +152,5 @@ async def analyze_screenshot_endpoint(
     }
 
 
-# In-memory LRU-like cache for ultra-fast repeated/preset queries (<1ms)
-_analysis_cache = {}
-_cache_lock = threading.Lock()
-_CACHE_MAX_SIZE = 200
-
-
-# ─── Core Analysis Logic (Concurrent Async Pipeline) ────────────────────────────
-
-async def _run_analysis_async(text: str, source_type: str) -> dict:
-    """
-    Run the complete scam analysis pipeline concurrently with in-memory caching.
-    """
-    text_hash = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:16]
-    cache_key = f"{source_type}:{text_hash}"
-
-    with _cache_lock:
-        if cache_key in _analysis_cache:
-            return _analysis_cache[cache_key]
-
-    loop = asyncio.get_running_loop()
-
-    # ── Group 1: Fast local CPU/IO work — bundled in one thread-pool call ───────
-    def _local_bundle():
-        analyzer       = get_analyzer()
-        ml_result      = analyzer.predict(text)
-        rule_result    = rule_analyze(text)
-        email_result   = analyze_emails_in_text(text)
-        salary_result  = check_salary(text)
-        known_warnings = check_text_for_known_scams(text)
-        web_intel      = analyze_web_intelligence(text, source_type)
-        return ml_result, rule_result, email_result, salary_result, known_warnings, web_intel
-
-    # ── Group 2: Gemini AI — network I/O, run in a separate thread ───────────────
-    def _gemini_bundle():
-        try:
-            return analyze_with_gemini_search(text, source_type)
-        except Exception as e:
-            # Never let a Gemini failure crash the whole pipeline
-            return {
-                "available": False,
-                "error": str(e),
-                "message": "AI web search could not be completed.",
-            }
-
-    # Run both groups concurrently — total time ≈ max(local, gemini), not sum
-    (
-        (ml_result, rule_result, email_result, salary_result, known_warnings, web_intel),
-        gemini_result,
-    ) = await asyncio.gather(
-        loop.run_in_executor(_executor, _local_bundle),
-        loop.run_in_executor(_executor, _gemini_bundle),
-    )
-
-    # ── Combine scores ────────────────────────────────────────────────────────────
-    ml_score   = ml_result["ml_score"]
-    rule_score = rule_result["rule_score"]
-
-    if gemini_result.get("available") and "scam_score" in gemini_result:
-        gemini_score   = gemini_result["scam_score"]
-        combined_score = (gemini_score * 0.40) + (ml_score * 0.35) + (rule_score * 0.25)
-    else:
-        # Weighted average
-        weighted = (ml_score * 0.55) + (rule_score * 0.45)
-        # When rule_score is very high (multiple strong keyword hits), it is a
-        # reliable indicator — don't let a low ML score on an unseen company name
-        # suppress a clear pattern match.
-        if rule_score >= 35:
-            floor = rule_score * 0.85
-        else:
-            floor = max(ml_score, rule_score) * 0.70
-        combined_score = max(weighted, floor)
-
-    # Boost when both signals independently agree it's a scam (convergent evidence)
-    if ml_score >= 70 and rule_score >= 30:
-        combined_score = min(100.0, combined_score + 8)
-    if ml_score >= 85 and rule_score >= 50:
-        combined_score = min(100.0, combined_score + 5)
-
-    # Boost for web intelligence signals (brand impersonation, high-risk TLDs)
-    if web_intel.get("risk_boost"):
-        combined_score += web_intel["risk_boost"]
-
-    # Boost if known scam identifiers found in threat registry
-    if known_warnings:
-        combined_score += 20  # Significant boost for known threat
-
-    # Boost for email/salary red flags
-    if email_result.get("overall_risk") == "high":
-        combined_score += 10
-    if salary_result.get("risk_level") == "high":
-        combined_score += 8
-
-    # Append web intelligence risk signals to itemized risk factors
-    combined_risk_factors = list(rule_result["risk_factors"])
-    for sig in web_intel.get("risk_signals", []):
-        combined_risk_factors.append({
-            "category":    sig["type"],
-            "severity":    sig["severity"],
-            "description": sig["title"],
-            "matches":     [sig["detail"]],
-        })
-
-    combined_score = min(100.0, max(0.0, combined_score))
-    trust_level    = get_trust_level(combined_score)
-
-    res = {
-        "scam_probability":    round(combined_score, 1),
-        "trust_level":         trust_level,
-        "ml_score":            ml_score,
-        "rule_score":          round(rule_score, 1),
-        "risk_factors":        combined_risk_factors,
-        "scam_keywords":       rule_result["scam_keywords"],
-        "email_analysis":      email_result,
-        "salary_analysis":     salary_result,
-        "known_scam_warnings": known_warnings,
-        "ml_top_features":     ml_result.get("top_features", []),
-        "web_intelligence":    web_intel,
-        "gemini_analysis":     gemini_result,
-        "original_text":       text,
-        "source_type":         source_type,
-    }
-
-    # Store in memory cache with lock
-    with _cache_lock:
-        if len(_analysis_cache) >= _CACHE_MAX_SIZE:
-            _analysis_cache.pop(next(iter(_analysis_cache)))
-        _analysis_cache[cache_key] = res
-
-    return res
+# Backwards compatibility alias
+_run_analysis_async = run_analysis_pipeline

@@ -20,14 +20,19 @@ except Exception:
 
 logger = logging.getLogger("jobshield.db")
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "scam_reports.db")
+DB_PATH = os.environ.get("JOBSHIELD_DB_PATH") or os.path.join(os.path.dirname(__file__), "scam_reports.db")
 
 
-def get_connection():
+def get_connection(db_path: Optional[str] = None):
     """Get SQLite connection with row factory (thread-safe)."""
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
+    target_path = db_path or os.environ.get("JOBSHIELD_DB_PATH") or DB_PATH
+    conn = sqlite3.connect(target_path, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
+    if target_path != ":memory:":
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except Exception:
+            pass
     conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
